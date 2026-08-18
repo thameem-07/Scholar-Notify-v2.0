@@ -1,0 +1,105 @@
+/* DropOut Defenders 3.0 Light & Pastel Theme Styles */
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Hide scrollbar for nav horizontal overflow */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Nav Tab Active States (Light Mode) */
+.nav-tab {
+    color: #64748b;
+    background-color: transparent;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.nav-tab:hover {
+    color: #1e293b;
+    background-color: #f1f5f9;
+}
+.nav-tab.active-tab {
+    color: #4338ca;
+    background-color: #eef2ff;
+    border-color: #c7d2fe;
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Tab Transitions */
+.tab-content {
+    animation: fadeIn 0.25s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* OCR Laser Scanner Animation */
+@keyframes scanLine {
+    0% {
+        top: 0%;
+    }
+    50% {
+        top: 95%;
+    }
+    100% {
+        top: 0%;
+    }
+}
+
+.ocr-laser {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #10b981, #34d399, transparent);
+    box-shadow: 0 0 10px #10b981, 0 0 20px #34d399;
+    animation: scanLine 2s infinite ease-in-out;
+}
+
+/* Printable Government Caution Note Formatting */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #cautionNotePaper, #cautionNotePaper * {
+        visibility: visible;
+    }
+    #cautionNotePaper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        box-shadow: none;
+        border: none;
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+}

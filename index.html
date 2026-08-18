@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholar Notify | Government Portal Login</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- SheetJS (Excel Parser) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Tesseract.js (Real Browser OCR Engine) -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#4f46e5',
+                            600: '#4338ca',
+                            700: '#3730a3',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body
+    class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- ================= LOGIN SCREEN PORTAL (LIGHT / PASTEL THEME) ================= -->
+    <div id="loginScreen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-100 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50 via-slate-100 to-slate-200 p-4">
+        <div class="w-full max-w-md bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-xl">
+
+            <!-- Logo Header -->
+            <div class="text-center mb-6">
+                <div
+                    class="w-14 h-14 mx-auto rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-2xl shadow-lg shadow-indigo-600/20 mb-3 ring-4 ring-indigo-100">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h1 class="text-xl font-extrabold text-slate-900">DropOut<span class="text-indigo-600">Defenders</span>
+                </h1>
+                <p class="text-xs text-slate-500 mt-1">SIH 2026 • Government Official Sign-In</p>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="loginError"
+                class="hidden text-xs bg-rose-50 text-rose-700 border border-rose-200 p-3 rounded-xl mb-4 text-center font-medium">
+                <!-- Dynamic Error Message -->
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <!-- Username Input -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Username /
+                        Employee ID</label>
+                    <div class="relative">
+                        <i
+                            class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="loginUser" autocomplete="username" required
+                            placeholder="Enter your assigned username..."
+                            class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-xl pl-9 pr-3 py-3 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <label
+                        class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
+                    <div class="relative">
+                        <i
+                            class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="password" id="loginPass" autocomplete="current-password" required
+                            placeholder="Enter password..."
+                            class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-xl pl-9 pr-3 py-3 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Sign In To Portal</span>
+                </button>
+            </form>
+
+            <!-- Notice Footer -->
+            <div class="mt-6 pt-4 border-t border-slate-200 text-center text-[11px] text-slate-500 space-y-1">
+                <div>🔒 <strong>Official Portal Notice</strong></div>
+                <div class="text-[10px] text-slate-400">Account credentials are provisioned by backend administrators.
+                    Public registration is disabled.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= DASHBOARD APP (LIGHT / PASTEL THEME) ================= -->
+    <div id="dashboardApp" class="hidden flex-col flex-1 min-h-screen">
+
+        <!-- MAIN NAVBAR -->
+        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('vsk')">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-base sm:text-lg text-slate-900">Scholar<span
+                                    class="text-indigo-600">Notify</span></span>
+                            <span
+                                class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold border border-indigo-200">v2.0</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 font-medium">Smart Student Counseling &amp; Risk System</p>
+                    </div>
+                </div>
+
+                <!-- Logged In Profile Badge & Logout Button -->
+                <div class="flex items-center gap-3">
+                    <div
+                        class="hidden sm:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                        <i class="fa-solid fa-circle-user text-indigo-600"></i>
+                        <span id="userProfileBadge" class="text-slate-700 font-semibold">Logged in: Teacher</span>
+                    </div>
+                    <button onclick="handleLogout()"
+                        class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- NAVIGATION TABS -->
+            <nav class="bg-slate-50 border-t border-slate-200 overflow-x-auto no-scrollbar">
+                <div class="max-w-7xl mx-auto px-4 flex justify-center items-center space-x-1 py-1.5 min-w-max">
+                    <button onclick="switchTab('vsk')" id="tab-vsk"
+                        class="nav-tab active-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-chart-line text-sm text-indigo-600"></i>
+                        <span>Dashboard Overview</span>
+                    </button>
+                    <button onclick="switchTab('ews')" id="tab-ews"
+                        class="nav-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-user-check text-sm text-emerald-600"></i>
+                        <span>Teacher Student List</span>
+                    </button>
+                    <button onclick="switchTab('multivector')" id="tab-multivector"
+                        class="nav-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-diagram-project text-sm text-sky-600"></i>
+                        <span>Dropout Causes</span>
+                    </button>
+                    <button onclick="switchTab('intake')" id="tab-intake"
+                        class="nav-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-wand-magic-sparkles text-sm text-amber-600"></i>
+                        <span>Universal Smart Intake</span>
+                    </button>
+                    <button onclick="switchTab('schemes')" id="tab-schemes"
+                        class="nav-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-hand-holding-hand text-sm text-emerald-600"></i>
+                        <span>Govt Schemes Matcher</span>
+                    </button>
+                    <button onclick="switchTab('simulator')" id="tab-simulator"
+                        class="nav-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-sliders text-sm text-purple-600"></i>
+                        <span>Support Plan Simulator</span>
+                    </button>
+                    <button onclick="switchTab('sathi')" id="tab-sathi"
+                        class="nav-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-user-group text-sm text-blue-600"></i>
+                        <span>Sathi Student Mentors</span>
+                    </button>
+                    <button onclick="switchTab('sos')" id="tab-sos"
+                        class="nav-tab text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-truck-medical text-sm text-red-600"></i>
+                        <span>Emergency Home Visit</span>
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- MAIN CONTAINER -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+            <!-- SECTION 1: DASHBOARD OVERVIEW -->
+            <section id="sec-vsk" class="tab-content">
+                <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl font-extrabold text-slate-900">School Cluster Overview</h1>
+                        <p class="text-xs text-slate-500 mt-1" id="dashSubTitle">Real-time risk analysis across active
+                            school clusters.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="triggerBatchNotification()"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Send Parent WhatsApp Message
+                        </button>
+                    </div>
+                </div>
+
+                <!-- METRIC CARDS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                        <div class="text-xs font-semibold text-slate-500">Total Students Monitored</div>
+                        <div class="text-2xl font-extrabold text-slate-900 mt-2" id="statTotalStudents">--</div>
+                        <div class="text-[11px] text-slate-500 mt-1" id="statTotalSchools">Across Active School Roster
+                        </div>
+                    </div>
+                    <div class="bg-rose-50/50 border border-rose-200/80 rounded-xl p-4 shadow-sm">
+                        <div class="text-xs font-semibold text-rose-700">Students Flagged For Support</div>
+                        <div class="text-2xl font-extrabold text-rose-700 mt-2" id="statFlaggedStudents">--</div>
+                        <div class="text-[11px] text-rose-600 mt-1">Model Risk Estimate</div>
+                    </div>
+                    <div class="bg-emerald-50/50 border border-emerald-200/80 rounded-xl p-4 shadow-sm">
+                        <div class="text-xs font-semibold text-emerald-700">Active Support Plans</div>
+                        <div class="text-2xl font-extrabold text-emerald-700 mt-2" id="statActivePlans">--</div>
+                        <div class="text-[11px] text-emerald-600 mt-1">Sathi Pairs &amp; Schemes</div>
+                    </div>
+                    <div class="bg-purple-50/50 border border-purple-200/80 rounded-xl p-4 shadow-sm">
+                        <div class="text-xs font-semibold text-purple-700">Teacher Time Saved</div>
+                        <div class="text-2xl font-extrabold text-purple-700 mt-2">48 hrs</div>
+                        <div class="text-[11px] text-purple-600 mt-1">Zero Double-Entry</div>
+                    </div>
+                </div>
+
+                <!-- DASHBOARD GRID -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Cluster Table -->
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-900 mb-3">School Cluster Summary</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold">
+                                    <tr>
+                                        <th class="p-2.5 rounded-l-lg">Cluster</th>
+                                        <th class="p-2.5">Students</th>
+                                        <th class="p-2.5">At Risk Count</th>
+                                        <th class="p-2.5">Main Cause</th>
+                                        <th class="p-2.5">Risk Level</th>
+                                        <th class="p-2.5 text-right rounded-r-lg">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vskDistrictTable" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- JS Populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Cause Pie Chart -->
+                    <div
+                        class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 mb-1">Dropout Causes Breakdown</h3>
+                            <p class="text-xs text-slate-500 mb-3">Estimated main triggers for absenteeism</p>
+                            <div class="relative h-48 w-full">
+                                <canvas id="vectorPieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: TEACHER STUDENT LIST -->
+            <section id="sec-ews" class="tab-content hidden">
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl font-extrabold text-slate-900">Teacher Student List</h1>
+                        <p class="text-xs text-slate-500 mt-1">Check student attendance, causes for absence, and send
+                            1-click parent messages.</p>
+                    </div>
+                    <button onclick="triggerBatchNotification()"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition-all shadow-sm">
+                        Send All Parent Alerts
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div
+                    class="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <input type="text" id="ewsSearchInput" placeholder="Filter student name..."
+                            oninput="filterStudents()"
+                            class="bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-600">
+
+                        <select id="riskFilter" onchange="filterStudents()"
+                            class="bg-slate-50 border border-slate-300 text-xs text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-600">
+                            <option value="ALL">All Risk Levels</option>
+                            <option value="Severe">Severe Risk (>75%)</option>
+                            <option value="High">High Risk (50-75%)</option>
+                            <option value="Moderate">Moderate Risk (30-50%)</option>
+                            <option value="Low">Low Risk (<30%)< /option>
+                        </select>
+
+                        <select id="vectorFilter" onchange="filterStudents()"
+                            class="bg-slate-50 border border-slate-300 text-xs text-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-600">
+                            <option value="ALL">All Causes</option>
+                            <option value="Academic">Academic (Marks/Backlogs)</option>
+                            <option value="Economic">Economic (Debt/Labor)</option>
+                            <option value="Health/Nutritional">Health &amp; Nutrition</option>
+                            <option value="Behavioral">Behavioral / Apathy</option>
+                            <option value="Environmental">Environmental / Travel</option>
+                        </select>
+                    </div>
+
+                    <div class="text-xs text-slate-500">
+                        Showing <strong id="studentCount" class="text-slate-900">0</strong> students
+                    </div>
+                </div>
+
+                <!-- Student Table -->
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th class="py-3 px-4">Student</th>
+                                    <th class="py-3 px-4">School</th>
+                                    <th class="py-3 px-4">Attendance</th>
+                                    <th class="py-3 px-4">Academic Marks</th>
+                                    <th class="py-3 px-4">Main Cause</th>
+                                    <th class="py-3 px-4">Risk Level</th>
+                                    <th class="py-3 px-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: DROPOUT CAUSES -->
+            <section id="sec-multivector" class="tab-content hidden">
+                <div class="mb-6">
+                    <h1 class="text-xl font-extrabold text-slate-900">Student Dropout Causes Breakdown</h1>
+                    <p class="text-xs text-slate-500 mt-1">Full-spectrum analysis combining school data, peer mentors,
+                        and local healthcare check-ins.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Select Student</label>
+                        <select id="multivectorStudentSelect" onchange="loadStudentDNA(this.value)"
+                            class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-lg p-2.5 mb-4">
+                            <!-- Populated dynamically -->
+                        </select>
+
+                        <div id="dnaStudentCard" class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                            <!-- Dynamic Student Details -->
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-bold text-slate-900">5 Main Causes Breakdown</h3>
+                            <span id="dnaRiskBadge"></span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6" id="dnaVectorCards">
+                            <!-- Dynamic -->
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-700">
+                            <h4 class="font-bold text-slate-800 mb-2 uppercase text-[10px]">Reason Summary &amp;
+                                Fallback Safeguard Plan</h4>
+                            <div id="dnaNarrative" class="space-y-1">Select a student above.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: UNIVERSAL SMART INTAKE ENGINE -->
+            <section id="sec-intake" class="tab-content hidden">
+                <div class="mb-6">
+                    <h1 class="text-xl font-extrabold text-slate-900">Universal Smart Document Intake Engine</h1>
+                    <p class="text-xs text-slate-500 mt-1">Accepts any Excel spreadsheet format, jumbled headers, custom
+                        column names, or paper register photos.</p>
+                </div>
+
+                <!-- Guidance Guidelines Banner -->
+                <div
+                    class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6 text-xs text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <strong class="font-extrabold text-slate-900">Smart Auto-Inference Active:</strong>
+                            <div class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                                Upload <strong>ANY</strong> Excel or CSV file with basic school metrics (e.g.
+                                <code>Distance</code>, <code>Math Score</code>, <code>Occupation</code>,
+                                <code>Gender</code>). The engine <strong>automatically infers and classifies the dropout
+                                    cause</strong> without requiring manual teacher entry!
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="downloadSampleTemplate()"
+                        class="bg-white border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-lg transition-all text-xs whitespace-nowrap shadow-sm">
+                        <i class="fa-solid fa-download"></i> Download Sample Excel
+                    </button>
+                </div>
+
+                <!-- TARGET CLUSTER SELECTION BAR -->
+                <div
+                    class="bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-school"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-900">Target School Cluster for Intake Batch</div>
+                            <div class="text-[11px] text-slate-500">Assign imported student intake records to a specific
+                                regional cluster.</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="intakeClusterSelect"
+                            class="text-xs font-bold text-slate-700 whitespace-nowrap">Select Cluster:</label>
+                        <select id="intakeClusterSelect"
+                            class="bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-600 transition-all">
+                            <option value="Anand Cluster">Anand Cluster</option>
+                            <option value="Vadodara Cluster">Vadodara Cluster</option>
+                            <option value="Kheda Cluster">Kheda Cluster</option>
+                            <option value="Surat Rural">Surat Rural</option>
+                            <option value="Surendranagar">Surendranagar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- UPLOAD DUAL CARDS -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+                    <!-- UPLOAD CARD 1: EXCEL / CSV IMPORTER -->
+                    <div
+                        class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-file-excel"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900">Upload Any Excel / CSV File</h3>
+                                    <p class="text-xs text-slate-500">Supports .xlsx, .xls, and .csv with any headers
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div id="excelDropZone"
+                                class="border-dashed border-2 border-slate-300 hover:border-emerald-500 rounded-xl p-5 text-center transition-all bg-slate-50/50 cursor-pointer">
+                                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv"
+                                    onchange="handleExcelUpload(event)" class="hidden">
+                                <label for="excelFileInput"
+                                    class="cursor-pointer flex flex-col items-center justify-center pointer-events-none">
+                                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-emerald-600 mb-2"></i>
+                                    <span class="text-xs font-bold text-slate-800">Click to Select Excel / CSV
+                                        File</span>
+                                    <span class="text-[11px] text-slate-500 mt-0.5" id="excelFileName">Or drag and drop
+                                        file here</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div
+                            class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex justify-between items-center">
+                            <span>Engine: SheetJS Smart Resolver</span>
+                            <span class="text-emerald-700 font-semibold">Flexible Headers OK</span>
+                        </div>
+                    </div>
+
+                    <!-- UPLOAD CARD 2: REGISTER PHOTO OCR -->
+                    <div
+                        class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-camera"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900">Upload Register Photo (OCR Reader)</h3>
+                                    <p class="text-xs text-slate-500">Supports .jpg, .jpeg, and .png register photos</p>
+                                </div>
+                            </div>
+
+                            <div id="photoDropZone"
+                                class="border-dashed border-2 border-slate-300 hover:border-amber-500 rounded-xl p-5 text-center transition-all bg-slate-50/50 cursor-pointer">
+                                <input type="file" id="photoFileInput" accept="image/*"
+                                    onchange="handlePhotoUpload(event)" class="hidden">
+                                <label for="photoFileInput"
+                                    class="cursor-pointer flex flex-col items-center justify-center pointer-events-none">
+                                    <i class="fa-solid fa-image text-2xl text-amber-600 mb-2"></i>
+                                    <span class="text-xs font-bold text-slate-800">Click to Select Register Photo</span>
+                                    <span class="text-[11px] text-slate-500 mt-0.5" id="photoFileName">Or drag and drop
+                                        photo here</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div
+                            class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex justify-between items-center">
+                            <span>Engine: Tesseract.js Browser OCR</span>
+                            <span class="text-amber-700 font-semibold">Ready for OCR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SMART HEADER MAPPER FEEDBACK PANEL -->
+                <div id="headerMapPanel"
+                    class="hidden bg-slate-900 text-white rounded-xl p-4 mb-6 shadow-md border border-slate-800">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+                        <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                            <i class="fa-solid fa-sliders text-emerald-400"></i> Smart Column Detector Output
+                        </div>
+                        <span
+                            class="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/30">Headers
+                            Resolved</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="detectedHeadersList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- PROCESSING & EXTRACTED DATA RESULTS TABLE -->
+                <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Extracted Attendance Records</h3>
+                            <p class="text-xs text-slate-500">Extracted real-time from uploaded document</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="intakeStatusBadge"
+                                class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 font-medium">No
+                                File Processed Yet</span>
+                            <button id="applyIntakeBtn" onclick="applyIntakeToRecords()" disabled
+                                class="bg-indigo-600 disabled:opacity-50 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all shadow-sm">
+                                <i class="fa-solid fa-rotate"></i> Sync Records To System
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- OCR Stream Log / Preview -->
+                    <div id="intakeLogStream"
+                        class="hidden bg-slate-900 text-emerald-400 font-mono text-xs p-3 rounded-lg mb-4 max-h-32 overflow-y-auto space-y-1">
+                        <!-- Log lines -->
+                    </div>
+
+                    <!-- Extracted Results Table -->
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th class="py-2.5 px-3 whitespace-nowrap">Student ID</th>
+                                    <th class="py-2.5 px-3 whitespace-nowrap">Student Name</th>
+                                    <th class="py-2.5 px-3 whitespace-nowrap">Parsed Attendance</th>
+                                    <th class="py-2.5 px-3">Auto-Inferred Cause</th>
+                                    <th class="py-2.5 px-3 whitespace-nowrap">Calculated Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody id="intakeResultsBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-slate-400">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-2xl mb-2 text-indigo-500"></i>
+                                        <div>Upload any Excel file or Register Photo above. Any column names are
+                                            automatically matched!</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 5: GOVT SCHEMES MATCHING -->
+            <section id="sec-schemes" class="tab-content hidden">
+                <div class="mb-6">
+                    <h1 class="text-xl font-extrabold text-slate-900">Government Welfare Scheme Matcher</h1>
+                    <p class="text-xs text-slate-500 mt-1">Auto-matches eligible students with government schemes (bus
+                        passes, free food kits, books).</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Select Student</label>
+                        <select id="schemeStudentSelect" onchange="loadStudentSchemeMatch(this.value)"
+                            class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-lg p-2.5 mb-4">
+                            <!-- Dynamic -->
+                        </select>
+
+                        <div id="schemeStudentDetail" class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-900 mb-3">Eligible Government Schemes</h3>
+                        <div id="schemeList" class="space-y-3">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6: SUPPORT PLAN SIMULATOR -->
+            <section id="sec-simulator" class="tab-content hidden">
+                <div class="mb-6">
+                    <h1 class="text-xl font-extrabold text-slate-900">Student Support Plan Simulator</h1>
+                    <p class="text-xs text-slate-500 mt-1">Dynamic Risk Math: Action impact percentages adapt uniquely
+                        to each student's specific primary cause vector.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Select Student</label>
+                        <select id="simStudentSelect" onchange="runSimulation()"
+                            class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-lg p-2.5 mb-4">
+                            <!-- Dynamic -->
+                        </select>
+
+                        <h4 class="text-xs font-bold text-slate-700 uppercase mb-3 border-b border-slate-200 pb-2">
+                            Cause-Aware Support Actions</h4>
+
+                        <div class="space-y-3">
+                            <label
+                                class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg text-xs cursor-pointer border border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="simPeer" onchange="runSimulation()" checked
+                                        class="rounded bg-white">
+                                    <span class="text-slate-800 font-semibold">Sathi Student Buddy</span>
+                                </div>
+                                <span id="simPeerBadge" class="text-indigo-600 font-bold">-0% Risk</span>
+                            </label>
+
+                            <label
+                                class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg text-xs cursor-pointer border border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="simTransport" onchange="runSimulation()" checked
+                                        class="rounded bg-white">
+                                    <span class="text-slate-800 font-semibold">Free Bus Pass Voucher</span>
+                                </div>
+                                <span id="simTransportBadge" class="text-indigo-600 font-bold">-0% Risk</span>
+                            </label>
+
+                            <label
+                                class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg text-xs cursor-pointer border border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="simMeal" onchange="runSimulation()"
+                                        class="rounded bg-white">
+                                    <span class="text-slate-800 font-semibold">PM-POSHAN Food Ration Kit</span>
+                                </div>
+                                <span id="simMealBadge" class="text-indigo-600 font-bold">-0% Risk</span>
+                            </label>
+
+                            <label
+                                class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg text-xs cursor-pointer border border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="simRemedial" onchange="runSimulation()"
+                                        class="rounded bg-white">
+                                    <span class="text-slate-800 font-semibold">Vidya Sethu Remedial Math Tutoring</span>
+                                </div>
+                                <span id="simRemedialBadge" class="text-indigo-600 font-bold">-0% Risk</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div
+                        class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-bold text-slate-900">Custom Risk Reduction Curve (60 Days)</h3>
+                                <span id="simCauseVectorBadge"
+                                    class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2.5 py-0.5 rounded border border-indigo-200">Cause
+                                    Vector</span>
+                            </div>
+
+                            <div class="relative h-56 w-full mb-3">
+                                <canvas id="simChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-indigo-50/50 border border-indigo-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                            <div>
+                                <div class="text-indigo-900">Baseline Risk: <span id="simBaseRisk"
+                                        class="font-bold text-slate-900">--</span> → Custom Simulated Risk: <span
+                                        id="simNewRisk" class="text-emerald-700 font-extrabold text-sm">--</span></div>
+                                <div class="text-indigo-700 text-[11px] mt-0.5" id="simRecommendation">Select parameters
+                                    above.</div>
+                            </div>
+                            <button onclick="applySimulatedPlan()"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-lg transition-all whitespace-nowrap shadow-sm">
+                                Apply Custom Support Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 8: SATHI STUDENT MENTORS -->
+            <section id="sec-sathi" class="tab-content hidden">
+                <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-user-group text-indigo-600"></i> Sathi Student Mentor Program
+                        </h1>
+                        <p class="text-xs text-slate-500 mt-1">Manage low-risk student opt-in/opt-out registry, manually
+                            pair senior mentors with at-risk mentees, and issue government certificates.</p>
+                    </div>
+                    <button onclick="openPairModal()" id="pairNewBtnHeader"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2 self-start md:self-auto">
+                        <i class="fa-solid fa-user-plus text-sm"></i> + Pair New Mentor
+                    </button>
+                </div>
+
+                <!-- TOP PANEL: LOW-RISK STUDENT OPT-IN / OPT-OUT REGISTRY -->
+                <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm mb-6">
+                    <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-user-check text-emerald-600"></i> Low-Risk Senior Student Opt-In /
+                                Opt-Out Registry
+                            </h3>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Students with low risk (<15%) can opt-in to
+                                    become peer mentors. Only Opted-In students appear in the mentor pairing
+                                    dropdown.</p>
+                        </div>
+                        <span
+                            class="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200"
+                            id="optInCountBadge">
+                            0 Opted-In Mentors
+                        </span>
+                    </div>
+
+                    <!-- Low Risk Student Registry Grid -->
+                    <div id="lowRiskOptInList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <!-- Dynamic Opt-In Cards -->
+                    </div>
+                </div>
+
+                <!-- BOTTOM GRID: MENTORS LEADERBOARD & ACTIVE PAIRS -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- LEFT: Available & Opted-In Mentors (Leaderboard + Certificates) -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-award text-amber-500"></i> Opted-In Mentors & Certificates
+                            </h3>
+                            <span class="text-[10px] text-slate-400 font-semibold">Active Pool</span>
+                        </div>
+                        <div id="mentorLeaderboard" class="space-y-3">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Active Mentor Pairs -->
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                    <i class="fa-solid fa-handshake text-indigo-600"></i> Active Mentor Pairs
+                                </h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Manually assigned pairings between senior
+                                    mentors and at-risk mentees.</p>
+                            </div>
+                            <button onclick="openPairModal()" id="pairNewBtn"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-all shadow-sm flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-plus"></i> Pair New Mentor
+                            </button>
+                        </div>
+
+                        <div id="sathiPairList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Dynamic Cards -->
+                        </div>
+                        <div id="sathiEmptyState" class="hidden text-center py-10 text-slate-400">
+                            <i class="fa-solid fa-user-group text-3xl mb-3 text-slate-300"></i>
+                            <div class="text-sm font-semibold text-slate-700">No active pairs created yet</div>
+                            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Make sure low-risk students are
+                                Opted-In above, then click "+ Pair New Mentor" to match them with at-risk students.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SATHI PAIR MODAL -->
+            <div id="sathiModal"
+                class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 overflow-hidden">
+                    <!-- Modal Header -->
+                    <div class="bg-indigo-600 px-6 py-4 flex items-center justify-between">
+                        <div>
+                            <div class="text-white font-extrabold text-base flex items-center gap-2">
+                                <i class="fa-solid fa-link"></i> Create Sathi Peer Pair
+                            </div>
+                            <div class="text-indigo-200 text-xs mt-0.5">Pair an Opted-In Senior Mentor with an At-Risk
+                                Student</div>
+                        </div>
+                        <button onclick="closePairModal()"
+                            class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-6 space-y-4">
+                        <!-- Select Mentor (Opted-In Only) -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                Select Opted-In Senior Mentor <span class="text-indigo-600 font-normal normal-case">(Low
+                                    Risk)</span>
+                            </label>
+                            <select id="pairMentorSelect"
+                                class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-600 transition-all font-medium">
+                                <!-- Dynamic -->
+                            </select>
+                        </div>
+
+                        <!-- Select Student (Unpaired At-Risk Only) -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                Select At-Risk Student <span
+                                    class="text-rose-600 font-normal normal-case">(Mentee)</span>
+                            </label>
+                            <select id="pairMenteeSelect"
+                                class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-600 transition-all font-medium">
+                                <!-- Dynamic -->
+                            </select>
+                        </div>
+
+                        <!-- Mentoring Focus -->
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mentoring
+                                Focus Area</label>
+                            <select id="pairFocusSelect"
+                                class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-600 transition-all">
+                                <option value="Daily Check-in & Attendance">Daily Check-in & Attendance</option>
+                                <option value="Homework & Remedial Tutoring">Homework & Remedial Tutoring</option>
+                                <option value="Emotional & Peer Encouragement">Emotional & Peer Encouragement</option>
+                                <option value="Exam & Subject Backlog Prep">Exam & Subject Backlog Prep</option>
+                                <option value="Safe Travel & Commute Buddy">Safe Travel & Commute Buddy</option>
+                            </select>
+                        </div>
+
+                        <!-- Optional Note -->
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Instructions
+                                / Note for Mentor</label>
+                            <textarea id="pairNoteInput" rows="2"
+                                placeholder="e.g. Student resides 6km away, please verify daily arrival and share remedial notes..."
+                                class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-600 transition-all resize-none"></textarea>
+                        </div>
+
+                        <!-- Validation error -->
+                        <div id="pairError"
+                            class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5 font-medium">
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="px-6 pb-6 flex gap-3">
+                        <button onclick="closePairModal()"
+                            class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 rounded-xl transition-all border border-slate-200">
+                            Cancel
+                        </button>
+                        <button onclick="confirmPairing()"
+                            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-link"></i> Confirm Pairing
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SATHI OFFICIAL MENTOR CERTIFICATE MODAL -->
+            <div id="sathiCertificateModal"
+                class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/75 backdrop-blur-md p-4">
+                <div
+                    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border-4 border-amber-400 overflow-hidden relative">
+                    <!-- Top Gold Banner -->
+                    <div
+                        class="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 text-white px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold text-amber-100">
+                                🎓
+                            </div>
+                            <div>
+                                <div class="font-black text-sm uppercase tracking-widest text-amber-100">Official
+                                    Government Recognition</div>
+                                <div class="text-xs text-white/90">Vidya Samiksha Kendra Peer Leadership Certificate
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="closeCertificateModal()"
+                            class="w-8 h-8 rounded-lg bg-black/20 hover:bg-black/30 text-white flex items-center justify-center transition-all">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Certificate Paper Body -->
+                    <div class="p-8 text-center bg-amber-50/30 border-8 border-double border-amber-200 m-3 rounded-xl relative"
+                        id="printableCertificateArea">
+                        <!-- Government Watermark Icon -->
+                        <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                            <i class="fa-solid fa-award text-[180px] text-amber-900"></i>
+                        </div>
+
+                        <!-- Header Title -->
+                        <div class="text-xs font-bold tracking-widest text-amber-800 uppercase mb-1">STATE DEPARTMENT OF
+                            SCHOOL EDUCATION &amp; LITERACY</div>
+                        <h2 class="text-2xl font-serif font-bold text-slate-900 tracking-wide uppercase mb-1">
+                            Certificate of Excellence</h2>
+                        <div class="text-xs font-semibold text-indigo-700 uppercase tracking-widest mb-6">IN PEER
+                            MENTORSHIP &amp; RETENTION LEADERSHIP</div>
+
+                        <!-- Recipient Name -->
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">This Certificate of
+                            Appreciation is proudly presented to</div>
+                        <div class="text-2xl font-extrabold text-indigo-900 underline decoration-amber-400 decoration-2 underline-offset-4 my-2"
+                            id="certMentorName">
+                            Aarav Patel
+                        </div>
+                        <div class="text-xs text-slate-600 font-medium mb-5" id="certMentorGradeSchool">
+                            Class 11-B • Govt High School Anand
+                        </div>
+
+                        <!-- Description -->
+                        <p class="text-xs text-slate-700 leading-relaxed max-w-lg mx-auto mb-6">
+                            In recognition of outstanding dedication, peer support, and leadership in the
+                            <strong class="text-indigo-900">Sathi Peer Mentorship Initiative (SIH PS-25102)</strong>.
+                            Through active check-ins and academic assistance, this mentor contributed directly to
+                            preventing student dropouts and building inclusive school culture.
+                        </p>
+
+                        <!-- Stats Box -->
+                        <div
+                            class="inline-flex items-center justify-center gap-6 bg-white border border-amber-200 rounded-xl px-6 py-2.5 shadow-sm mb-6">
+                            <div>
+                                <div class="text-[10px] text-slate-400 uppercase font-bold">Retention Streak</div>
+                                <div class="text-sm font-black text-emerald-700" id="certStreak">18 Days Active</div>
+                            </div>
+                            <div class="w-px h-6 bg-slate-200"></div>
+                            <div>
+                                <div class="text-[10px] text-slate-400 uppercase font-bold">Leadership Score</div>
+                                <div class="text-sm font-black text-amber-600" id="certPoints">420 Points</div>
+                            </div>
+                            <div class="w-px h-6 bg-slate-200"></div>
+                            <div>
+                                <div class="text-[10px] text-slate-400 uppercase font-bold">Certificate ID</div>
+                                <div class="text-xs font-mono font-bold text-slate-800" id="certId">CERT-VSK-2026-MTR01
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Signatures -->
+                        <div class="grid grid-cols-2 gap-8 pt-4 border-t border-amber-200 max-w-md mx-auto text-center">
+                            <div>
+                                <div class="font-serif italic text-xs text-slate-800 font-bold mb-1">Dr. S. K. Sharma
+                                </div>
+                                <div class="text-[10px] text-slate-500 font-bold uppercase">District Education Officer
+                                </div>
+                            </div>
+                            <div>
+                                <div class="font-serif italic text-xs text-indigo-900 font-bold mb-1">Vidya Samiksha
+                                    Kendra</div>
+                                <div class="text-[10px] text-slate-500 font-bold uppercase">State Nodal Authority</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-between items-center">
+                        <div class="text-[11px] text-slate-500">
+                            Valid government credential for future academic &amp; scholarship applications.
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="closeCertificateModal()"
+                                class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition-all">
+                                Close
+                            </button>
+                            <button onclick="printMentorCertificate()"
+                                class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-amber-600/20 flex items-center gap-1.5">
+                                <i class="fa-solid fa-print"></i> Print Official Certificate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 9: EMERGENCY HOME VISIT & TRUSTED LIAISON -->
+            <section id="sec-sos" class="tab-content hidden">
+                <div class="mb-6">
+                    <h1 class="text-xl font-extrabold text-slate-900">Emergency Home Visit &amp; Official Notice</h1>
+                    <p class="text-xs text-slate-500 mt-1">Request offline check-ups by Anganwadi / ASHA workers for
+                        non-disclosing or resistant cases.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-900 mb-3">Assign Offline Visit</h3>
+
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-2">High Risk Student</label>
+                        <select id="sosStudentSelect" onchange="loadSOSStudent()"
+                            class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-lg p-2.5 mb-4">
+                            <!-- Dynamic -->
+                        </select>
+
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Assign Trusted
+                            Liaison</label>
+                        <select id="sosAgency"
+                            class="w-full bg-slate-50 border border-slate-300 text-xs text-slate-900 rounded-lg p-2.5 mb-5">
+                            <option value="Anganwadi Local Health Supervisor">Anganwadi Local Health Worker (Casual
+                                Routine Visit)</option>
+                            <option value="ASHA Village Health Worker">ASHA Community Worker (Low Stigma Check-in)
+                            </option>
+                            <option value="Gram Panchayat Education Officer">Gram Panchayat Education Worker</option>
+                            <option value="District Education Taskforce">District Official Verification Team</option>
+                        </select>
+
+                        <button onclick="dispatchFieldSOS()"
+                            class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-lg shadow-sm transition-all">
+                            Request Community Visit
+                        </button>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-900">Official Government Guidance Notice</h3>
+                            <button onclick="printCautionNote()"
+                                class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-medium px-3 py-1.5 rounded-lg transition-all">
+                                <i class="fa-solid fa-print"></i> Print Notice
+                            </button>
+                        </div>
+
+                        <div id="cautionNotePaper"
+                            class="bg-white text-slate-900 rounded-lg p-5 shadow-lg border border-slate-300 font-sans text-xs">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div>DropOut Defenders 3.0 • Teacher & Officer Portal</div>
+                <div>Protected by Vidya Samiksha Kendra System</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast"
+        class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white border border-slate-800 rounded-xl p-4 flex items-center gap-3 shadow-2xl max-w-sm pointer-events-none">
+        <div id="toastIcon"
+            class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0 text-xs">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <div id="toastTitle" class="text-xs font-bold text-white">Notification</div>
+            <div id="toastMsg" class="text-[11px] text-slate-300">Action completed successfully.</div>
+        </div>
+    </div>
+
+    <!-- Application JS Data & Logic -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
