@@ -1,4 +1,4 @@
-# 🛡️ DropOut Defenders 3.0 (Scholar Notify)
+# Scholar Notify
 
 > An Early Warning System (EWS) and multi-vector intervention platform designed to identify, analyze, and prevent school dropouts in real time. Built for Smart India Hackathon (SIH).
 
@@ -6,7 +6,7 @@
 
 ## 📌 Overview
 
-**DropOut Defenders 3.0** is an interactive web-based portal tailored for Teachers, District Education Officers (DEO), and Government Administrators. It combines multi-vector risk diagnostics, automated welfare scheme matching, peer mentorship tracking, and emergency field dispatch workflows to protect at-risk students and boost school retention rates.
+**SCHOLAR NOTIFY** is an interactive web-based portal tailored for Teachers, District Education Officers (DEO), and Government Administrators. It combines multi-vector risk diagnostics, automated welfare scheme matching, peer mentorship tracking, and emergency field dispatch workflows to protect at-risk students and boost school retention rates.
 
 ---
 
