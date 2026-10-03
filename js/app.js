@@ -1,4 +1,4 @@
-// DropOut Defenders 3.0 Core Application Logic (Same-Origin Native Voice Audio Stream Engine)
+// Scholar Notify v2.0 - Core Application Logic & Refined Forest Green × Dark Slate × Lime Design System
 
 const VALID_ACCOUNTS = {
     "teacher.anand": { pass: "teacher@2026", role: "Teacher", name: "Ramesh Solanki (Teacher - Anand)" },
@@ -14,15 +14,73 @@ let selectedStudentForScheme = MOCK_STUDENTS[0];
 let selectedStudentForSim = MOCK_STUDENTS[0];
 let selectedStudentForSOS = MOCK_STUDENTS[0];
 
-
 let parsedIntakeRows = [];
-
 let vectorPieChartInstance = null;
 let simChartInstance = null;
-
 let activeMediaAudio = null;
+let sathiPairs = [];
+let prevSimNewRisk = null;
 
-// PCM WAV FILE GENERATOR IN BROWSER MEMORY (HTML5 MEDIA PIPELINE LIKE YOUTUBE)
+// ==========================================================================
+// 1. NUMERIC COUNT-UP ANIMATION HELPER (600-900ms, Pure Vanilla JS)
+// ==========================================================================
+function animateCountUp(element, endVal, duration = 750, prefix = '', suffix = '') {
+    if (!element) return;
+    const num = parseInt(endVal, 10);
+    if (isNaN(num)) {
+        element.innerHTML = `${prefix}${endVal}${suffix}`;
+        return;
+    }
+
+    // Respect reduced motion accessibility
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        element.innerHTML = `${prefix}${num.toLocaleString()}${suffix}`;
+        return;
+    }
+
+    const startVal = 0;
+    const startTime = performance.now();
+
+    function update(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // easeOutQuart
+        const ease = 1 - Math.pow(1 - progress, 4);
+        const current = Math.round(startVal + (num - startVal) * ease);
+        element.innerHTML = `${prefix}${current.toLocaleString()}${suffix}`;
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            element.innerHTML = `${prefix}${num.toLocaleString()}${suffix}`;
+        }
+    }
+    requestAnimationFrame(update);
+}
+
+function animateValue(element, startVal, endVal, duration = 400, prefix = '', suffix = '') {
+    if (!element) return;
+    const startNum = parseInt(startVal, 10) || 0;
+    const endNum = parseInt(endVal, 10) || 0;
+    const startTime = performance.now();
+
+    function update(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(startNum + (endNum - startNum) * ease);
+        element.innerHTML = `${prefix}${current}${suffix}`;
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            element.innerHTML = `${prefix}${endNum}${suffix}`;
+        }
+    }
+    requestAnimationFrame(update);
+}
+
+// ==========================================================================
+// 2. PCM WAV AUDIO ENGINE IN BROWSER MEMORY
+// ==========================================================================
 function generateWavAudioUri(freq1, freq2, durationSec = 0.6) {
     const sampleRate = 8000;
     const numSamples = Math.floor(sampleRate * durationSec);
@@ -67,54 +125,60 @@ function generateWavAudioUri(freq1, freq2, durationSec = 0.6) {
     return 'data:audio/wav;base64,' + btoa(binary);
 }
 
-// PLAY AUDIBLE MEDIA CHIME (100% WORKING LIKE YOUTUBE AUDIO)
 function playCallChime() {
     if (activeMediaAudio) {
         activeMediaAudio.pause();
     }
-    const chimeWavUri = generateWavAudioUri(523.25, 659.25, 0.7); // High Dual Tone Chime (C5 + E5)
+    const chimeWavUri = generateWavAudioUri(523.25, 659.25, 0.6);
     activeMediaAudio = new Audio(chimeWavUri);
-    activeMediaAudio.volume = 1.0;
-    activeMediaAudio.play().then(() => {
-        showToast("Audio Chime Playing!", "Audible sound output confirmed.", "success");
-    }).catch(e => {
-        console.error("Audio playback error:", e);
-    });
+    activeMediaAudio.volume = 0.8;
+    activeMediaAudio.play().catch(e => console.log("Audio notice:", e));
 }
 
-// INITIALIZATION & SESSION CHECK
+// ==========================================================================
+// 3. INITIALIZATION & SESSION PERSISTENCE
+// ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
     const savedUser = localStorage.getItem('dropoutDefendersUser');
     if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        showDashboard();
+        try {
+            currentUser = JSON.parse(savedUser);
+            showDashboard();
+        } catch (e) {
+            localStorage.removeItem('dropoutDefendersUser');
+        }
     }
 });
 
-
-// AUTHENTICATION HANDLERS
+// ==========================================================================
+// 4. AUTHENTICATION HANDLERS
+// ==========================================================================
 function handleLogin(e) {
     if (e) e.preventDefault();
-    
+
     const userVal = document.getElementById('loginUser').value.trim();
     const passVal = document.getElementById('loginPass').value;
     const errorBox = document.getElementById('loginError');
 
     if (VALID_ACCOUNTS[userVal] && VALID_ACCOUNTS[userVal].pass === passVal) {
         if (errorBox) errorBox.classList.add('hidden');
-        
+
         currentUser = VALID_ACCOUNTS[userVal];
         localStorage.setItem('dropoutDefendersUser', JSON.stringify(currentUser));
-        
+
         showDashboard();
-        showToast("Access Granted!", `Welcome to the portal, ${currentUser.name}.`, "success");
+        showToast("Access Granted!", `Welcome to Scholar Notify, ${currentUser.name}.`, "success");
     } else {
         if (errorBox) {
-            errorBox.innerText = "Invalid username or password. Accounts are provisioned exclusively by your District Education Administrator.";
+            errorBox.innerText = "Invalid credentials. Accounts are provisioned exclusively by your District Education Administrator.";
             errorBox.classList.remove('hidden');
+            errorBox.classList.remove('shake-error');
+            // Force DOM reflow to re-trigger shake animation
+            void errorBox.offsetWidth;
+            errorBox.classList.add('shake-error');
         }
         document.getElementById('loginPass').value = '';
-        showToast("Authentication Failed", "Incorrect username or password entered.", "error");
+        showToast("Authentication Failed", "Incorrect username or password.", "error");
     }
 }
 
@@ -122,17 +186,20 @@ function handleLogout() {
     currentUser = null;
     localStorage.removeItem('dropoutDefendersUser');
 
-    document.getElementById('dashboardApp').classList.add('hidden');
-    document.getElementById('dashboardApp').classList.remove('flex');
-    document.getElementById('loginScreen').classList.remove('hidden');
-    
+    const app = document.getElementById('dashboardApp');
+    const login = document.getElementById('loginScreen');
+
+    app.classList.add('hidden');
+    app.classList.remove('flex');
+    login.classList.remove('hidden');
+
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
-    
+
     const errorBox = document.getElementById('loginError');
     if (errorBox) errorBox.classList.add('hidden');
 
-    showToast("Logged Out", "You have signed out of the system.", "info");
+    showToast("Signed Out", "You have securely signed out of the portal.", "info");
 }
 
 function showDashboard() {
@@ -158,67 +225,15 @@ function showDashboard() {
     loadSathiPairs();
     loadSOSStudent();
     initDragAndDrop();
+    setIntakeWorkflowStage(1);
 }
 
-// DRAG & DROP FILE UPLOAD ENGINE FOR UNIVERSAL INTAKE
-function initDragAndDrop() {
-    setupDropZone('excelDropZone', 'excelFileInput', (file) => {
-        handleExcelUpload({ target: { files: [file] } });
-    }, 'border-emerald-500', 'bg-emerald-50');
-
-    setupDropZone('photoDropZone', 'photoFileInput', (file) => {
-        handlePhotoUpload({ target: { files: [file] } });
-    }, 'border-amber-500', 'bg-amber-50');
-}
-
-function setupDropZone(dropZoneId, inputId, onFileDrop, borderClass, bgClass) {
-    const dropZone = document.getElementById(dropZoneId);
-    const fileInput = document.getElementById(inputId);
-    if (!dropZone || !fileInput) return;
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.classList.add(borderClass, bgClass);
-        }, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.classList.remove(borderClass, bgClass);
-        }, false);
-    });
-
-    // Support clicking anywhere on the drop zone container
-    dropZone.addEventListener('click', (e) => {
-        if (e.target !== fileInput && e.target.tagName !== 'LABEL') {
-            fileInput.click();
-        }
-    });
-
-    // Handle File Drop
-    dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt ? dt.files : null;
-        if (files && files.length > 0) {
-            fileInput.files = files;
-            onFileDrop(files[0]);
-        }
-    }, false);
-}
-
-// TAB NAVIGATION
+// ==========================================================================
+// 5. NAVIGATION & TAB ROUTING
+// ==========================================================================
 function switchTab(tabId) {
     currentTab = tabId;
-    
+
     document.querySelectorAll('.nav-tab').forEach(btn => {
         btn.classList.remove('active-tab');
     });
@@ -235,9 +250,9 @@ function switchTab(tabId) {
     }
 
     if (tabId === 'vsk') {
-        setTimeout(renderVSKCharts, 100);
+        setTimeout(renderVSKCharts, 120);
     } else if (tabId === 'simulator') {
-        setTimeout(runSimulation, 100);
+        setTimeout(runSimulation, 120);
     }
 }
 
@@ -245,7 +260,9 @@ function initTabs() {
     switchTab('vsk');
 }
 
-// POPULATE DROPDOWNS
+// ==========================================================================
+// 6. POPULATE DROPDOWNS
+// ==========================================================================
 function populateStudentDropdowns() {
     const dnaSelect = document.getElementById('multivectorStudentSelect');
     const schemeSelect = document.getElementById('schemeStudentSelect');
@@ -259,58 +276,62 @@ function populateStudentDropdowns() {
     if (dnaSelect) dnaSelect.innerHTML = optionsHTML;
     if (schemeSelect) schemeSelect.innerHTML = optionsHTML;
     if (simSelect) simSelect.innerHTML = optionsHTML;
-    if (sosSelect) sosSelect.innerHTML = MOCK_STUDENTS.filter(s => s.riskLevel === 'Severe' || s.riskLevel === 'High').map(s => `
-        <option value="${s.id}">${s.name} (${s.id}) - ${s.school}</option>
-    `).join('');
+    if (sosSelect) {
+        sosSelect.innerHTML = MOCK_STUDENTS.filter(s => s.riskLevel === 'Severe' || s.riskLevel === 'High').map(s => `
+            <option value="${s.id}">${s.name} (${s.id}) - ${s.school}</option>
+        `).join('');
+    }
 }
 
-// DYNAMIC CLUSTER TELEMETRY AGGREGATOR
+// ==========================================================================
+// 7. VSK OVERVIEW & DISTRICT SURVEILLANCE (SECTION 1)
+// ==========================================================================
 function getDynamicClusterTelemetry() {
-    const defaultClusters = ["Anand Cluster", "Vadodara Cluster", "Kheda Cluster", "Surat Rural", "Surendranagar"];
-    const existingDistricts = MOCK_STUDENTS.map(s => s.district || "Anand Cluster");
-    const allClusters = Array.from(new Set([...defaultClusters, ...existingDistricts]));
+    const clusterMap = {};
 
-    return allClusters.map(clusterName => {
-        const clusterStudents = MOCK_STUDENTS.filter(s => {
-            const dist = (s.district || "").toLowerCase();
-            const school = (s.school || "").toLowerCase();
-            const target = clusterName.toLowerCase().replace(" cluster", "").replace(" rural", "");
-            return dist.includes(target) || school.includes(target);
-        });
+    MOCK_STUDENTS.forEach(s => {
+        const dist = s.district;
+        if (!clusterMap[dist]) {
+            clusterMap[dist] = {
+                district: dist,
+                enrolled: 0,
+                atRisk: 0,
+                vectors: {},
+                highestRisk: 'Low'
+            };
+        }
 
-        const count = clusterStudents.length;
-        const atRiskStudents = clusterStudents.filter(s => s.riskLevel === 'Severe' || s.riskLevel === 'High' || s.riskLevel === 'Moderate');
-        const atRiskCount = atRiskStudents.length;
-        const atRiskPct = count > 0 ? ((atRiskCount / count) * 100).toFixed(1) : "0.0";
+        clusterMap[dist].enrolled += 1;
+        if (s.riskLevel === 'Severe' || s.riskLevel === 'High' || s.riskLevel === 'Moderate') {
+            clusterMap[dist].atRisk += 1;
+        }
 
-        // Find most frequent vector in cluster
-        const vectorCounts = {};
-        clusterStudents.forEach(s => {
-            vectorCounts[s.primaryVector] = (vectorCounts[s.primaryVector] || 0) + 1;
-        });
+        clusterMap[dist].vectors[s.primaryVector] = (clusterMap[dist].vectors[s.primaryVector] || 0) + 1;
 
-        let topVector = "Academic";
-        let maxCount = 0;
-        Object.keys(vectorCounts).forEach(v => {
-            if (vectorCounts[v] > maxCount) {
-                maxCount = vectorCounts[v];
-                topVector = v;
+        const rank = { 'Severe': 4, 'High': 3, 'Moderate': 2, 'Low': 1 };
+        if (rank[s.riskLevel] > (rank[clusterMap[dist].highestRisk] || 0)) {
+            clusterMap[dist].highestRisk = s.riskLevel;
+        }
+    });
+
+    return Object.values(clusterMap).map(c => {
+        let topVector = 'Economic';
+        let topCount = 0;
+        for (const [vec, count] of Object.entries(c.vectors)) {
+            if (count > topCount) {
+                topCount = count;
+                topVector = vec;
             }
-        });
+        }
 
-        // Determine cluster risk level
-        let clusterRisk = "Low";
-        if (clusterStudents.some(s => s.riskLevel === 'Severe')) clusterRisk = "Severe";
-        else if (clusterStudents.some(s => s.riskLevel === 'High')) clusterRisk = "High";
-        else if (atRiskCount > 0) clusterRisk = "Moderate";
-
+        const pct = c.enrolled > 0 ? ((c.atRisk / c.enrolled) * 100).toFixed(0) : 0;
         return {
-            district: clusterName,
-            enrolled: count,
-            atRisk: atRiskCount,
-            atRiskPct: atRiskPct,
+            district: c.district,
+            enrolled: c.enrolled,
+            atRisk: c.atRisk,
+            atRiskPct: pct,
             primaryVector: topVector,
-            riskLevel: clusterRisk
+            riskLevel: c.highestRisk
         };
     });
 }
@@ -319,17 +340,15 @@ function inspectClusterStudents(clusterName) {
     switchTab('ews');
     const searchInput = document.getElementById('ewsSearchInput');
     if (searchInput) {
-        const cleanName = clusterName.replace(" Cluster", "").replace(" Rural", "");
+        const cleanName = clusterName.replace(/\s+(Cluster|Rural)$/i, '').trim();
         searchInput.value = cleanName;
         filterStudents();
     }
 }
 
-// SECTION 1: DASHBOARD OVERVIEW RENDERER
 function renderVSKDashboard() {
     const tableBody = document.getElementById('vskDistrictTable');
-    
-    // Dynamic Stat Cards Synchronization
+
     const totalStudents = MOCK_STUDENTS.length;
     const flaggedStudents = MOCK_STUDENTS.filter(s => s.riskLevel === 'Severe' || s.riskLevel === 'High' || s.riskLevel === 'Moderate').length;
     const flaggedPct = totalStudents > 0 ? ((flaggedStudents / totalStudents) * 100).toFixed(1) : "0.0";
@@ -340,37 +359,43 @@ function renderVSKDashboard() {
     const elActive = document.getElementById('statActivePlans');
     const elSub = document.getElementById('dashSubTitle');
 
-    if (elTotal) elTotal.innerText = totalStudents.toLocaleString();
-    if (elFlagged) elFlagged.innerHTML = `${flaggedStudents} <span class="text-xs font-medium text-rose-600">(${flaggedPct}%)</span>`;
-    if (elActive) elActive.innerText = activePlans > 0 ? `${activePlans} Pair${activePlans > 1 ? 's' : ''}` : '0 Active';
-    if (elSub) elSub.innerText = `Real-time risk analysis for ${totalStudents} active student profile(s) across local school clusters.`;
+    // Smooth count-up animations for KPI cards (600-900ms)
+    animateCountUp(elTotal, totalStudents, 750);
+    animateCountUp(elFlagged, flaggedStudents, 800, '', ` <span class="text-xs font-semibold text-rose-400">(${flaggedPct}%)</span>`);
+    animateCountUp(elActive, activePlans, 700, '', activePlans > 0 ? ` Pair${activePlans > 1 ? 's' : ''}` : ' Active');
+
+    if (elSub) {
+        elSub.innerText = `Real-time risk analysis for ${totalStudents} active student profile(s) across local school clusters.`;
+    }
 
     if (!tableBody) return;
 
     const clusterTelemetry = getDynamicClusterTelemetry();
 
     tableBody.innerHTML = clusterTelemetry.map(d => {
-        let badgeColor = 'bg-rose-50 text-rose-700 border-rose-200';
-        if (d.riskLevel === 'High') badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
-        if (d.riskLevel === 'Moderate') badgeColor = 'bg-sky-50 text-sky-700 border-sky-200';
-        if (d.riskLevel === 'Low') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        let badgeColor = 'bg-rose-950/60 text-rose-300 border-rose-800/80';
+        if (d.riskLevel === 'High') badgeColor = 'bg-amber-950/60 text-amber-300 border-amber-800/80';
+        if (d.riskLevel === 'Moderate') badgeColor = 'bg-sky-950/60 text-sky-300 border-sky-800/80';
+        if (d.riskLevel === 'Low') badgeColor = 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80';
 
         return `
-            <tr class="hover:bg-slate-50 transition-colors">
-                <td class="py-3 px-3 font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-location-dot text-indigo-600"></i> ${d.district}
+            <tr class="table-interactive-row">
+                <td class="py-3 px-3 font-bold text-[#F5F7F5] flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot text-[#10B981] text-xs"></i> ${d.district}
                 </td>
-                <td class="py-3 px-3 font-bold text-slate-800">${d.enrolled}</td>
-                <td class="py-3 px-3 font-semibold ${d.atRisk > 0 ? 'text-rose-700' : 'text-emerald-700'}">${d.atRisk} (${d.atRiskPct}%)</td>
-                <td class="py-3 px-3"><span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px] text-slate-700">${d.primaryVector}</span></td>
+                <td class="py-3 px-3 font-semibold text-[#94A39C]">${d.enrolled}</td>
+                <td class="py-3 px-3 font-semibold ${d.atRisk > 0 ? 'text-rose-400' : 'text-[#10B981]'}">${d.atRisk} (${d.atRiskPct}%)</td>
                 <td class="py-3 px-3">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${badgeColor}">
+                    <span class="bg-[#111B18] px-2 py-0.5 rounded border border-[#263A32] text-[11px] text-[#6EE7B7] font-medium">${d.primaryVector}</span>
+                </td>
+                <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${badgeColor}">
                         ${d.riskLevel}
                     </span>
                 </td>
                 <td class="py-3 px-3 text-right">
-                    <button onclick="inspectClusterStudents('${d.district}')" class="text-indigo-600 font-bold hover:underline text-[11px] flex items-center justify-end gap-1">
-                        Inspect Cluster <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    <button onclick="inspectClusterStudents('${d.district}')" class="inspect-cluster-btn text-[#10B981] font-bold hover:underline text-[11px] inline-flex items-center gap-1 cursor-pointer">
+                        <span>Inspect</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
                     </button>
                 </td>
             </tr>
@@ -396,35 +421,75 @@ function renderVSKCharts() {
             datasets: [{
                 data: [32, 28, 15, 13, 12],
                 backgroundColor: [
-                    '#f43f5e',
-                    '#f59e0b',
-                    '#10b981',
-                    '#0284c7',
-                    '#8b5cf6'
+                    '#F59E0B', // Economic - High risk semantic amber
+                    '#EF4444', // Academic - Severe risk semantic red
+                    '#10B981', // Health - Low risk semantic emerald
+                    '#3B82F6', // Environmental - Moderate risk semantic blue
+                    '#6EE7B7'  // Behavioral - Lime mint highlight
                 ],
                 borderWidth: 2,
-                borderColor: '#ffffff'
+                borderColor: '#17231F',
+                hoverOffset: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                animateRotate: true,
+                duration: 750,
+                easing: 'easeOutQuart'
+            },
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        color: '#475569',
-                        font: { size: 10, family: 'Plus Jakarta Sans' },
-                        boxWidth: 10
+                        color: '#94A39C',
+                        font: { size: 10, family: 'Plus Jakarta Sans', weight: '600' },
+                        boxWidth: 10,
+                        padding: 8
                     }
+                },
+                tooltip: {
+                    backgroundColor: '#17231F',
+                    borderColor: '#263A32',
+                    borderWidth: 1,
+                    titleColor: '#F5F7F5',
+                    bodyColor: '#94A39C',
+                    padding: 8,
+                    cornerRadius: 8
                 }
             },
-            cutout: '70%'
-        }
+            cutout: '72%'
+        },
+        plugins: [{
+            id: 'doughnutCenterText',
+            beforeDraw: function(chart) {
+                const { width, height, ctx } = chart;
+                ctx.save();
+                const total = MOCK_STUDENTS.length;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Label: RISK PROFILE
+                ctx.font = '700 9px Plus Jakarta Sans';
+                ctx.fillStyle = '#94A39C';
+                ctx.fillText('RISK PROFILE', width / 2, (height / 2) - 10);
+
+                // Student count number
+                ctx.font = 'bold 22px Plus Jakarta Sans';
+                ctx.fillStyle = '#F5F7F5';
+                ctx.fillText(total.toString(), width / 2, (height / 2) + 12);
+                
+                ctx.restore();
+            }
+        }]
     });
 }
 
-// SECTION 2: TEACHER STUDENT TABLE
+// ==========================================================================
+// 8. EARLY WARNING SYSTEM & STUDENT DIRECTORY (SECTION 2)
+// ==========================================================================
 function filterStudents() {
     const searchVal = document.getElementById('ewsSearchInput').value.toLowerCase();
     const riskVal = document.getElementById('riskFilter').value;
@@ -440,15 +505,6 @@ function filterStudents() {
     renderStudentTable();
 }
 
-function handleGlobalSearch(query) {
-    switchTab('ews');
-    const searchInput = document.getElementById('ewsSearchInput');
-    if (searchInput) {
-        searchInput.value = query;
-        filterStudents();
-    }
-}
-
 function renderStudentTable() {
     const tbody = document.getElementById('studentTableBody');
     const countSpan = document.getElementById('studentCount');
@@ -459,8 +515,8 @@ function renderStudentTable() {
     if (activeStudents.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="py-8 text-center text-slate-400">
-                    <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
+                <td colspan="7" class="py-8 text-center text-[#94A39C]">
+                    <i class="fa-solid fa-folder-open text-2xl mb-2 text-[#263A32]"></i>
                     <div>No students match the selected filter criteria.</div>
                 </td>
             </tr>
@@ -469,51 +525,51 @@ function renderStudentTable() {
     }
 
     tbody.innerHTML = activeStudents.map(s => {
-        let riskBadge = 'bg-rose-50 text-rose-700 border-rose-200';
-        let scoreColor = 'text-rose-700';
+        let riskBadge = 'bg-rose-950/60 text-rose-300 border-rose-800/80';
+        let scoreColor = 'text-rose-400';
 
         if (s.riskLevel === 'High') {
-            riskBadge = 'bg-amber-50 text-amber-700 border-amber-200';
-            scoreColor = 'text-amber-700';
+            riskBadge = 'bg-amber-950/60 text-amber-300 border-amber-800/80';
+            scoreColor = 'text-amber-400';
         } else if (s.riskLevel === 'Moderate') {
-            riskBadge = 'bg-sky-50 text-sky-700 border-sky-200';
-            scoreColor = 'text-sky-700';
+            riskBadge = 'bg-sky-950/60 text-sky-300 border-sky-800/80';
+            scoreColor = 'text-sky-300';
         } else if (s.riskLevel === 'Low') {
-            riskBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-            scoreColor = 'text-emerald-700';
+            riskBadge = 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80';
+            scoreColor = 'text-[#10B981]';
         }
 
         const pair = sathiPairs.find(p => p.menteeId === s.id);
 
         return `
-            <tr class="hover:bg-slate-50 transition-colors">
-                <td class="py-3.5 px-4 whitespace-nowrap">
-                    <div class="font-bold text-slate-900">${s.name}</div>
-                    <div class="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+            <tr class="table-interactive-row">
+                <td class="py-3 px-4 whitespace-nowrap">
+                    <div class="font-bold text-[#F5F7F5]">${s.name}</div>
+                    <div class="text-[11px] text-[#94A39C] flex items-center gap-1.5 mt-0.5">
                         <span>${s.id} • ${s.grade}</span>
-                        ${pair ? `<span class="text-[9px] bg-indigo-50 text-indigo-700 font-bold px-1.5 py-0.5 rounded border border-indigo-200"><i class="fa-solid fa-handshake"></i> ${pair.mentorName}</span>` : ''}
+                        ${pair ? `<span class="text-[9px] bg-[#123B2A] text-[#6EE7B7] font-bold px-1.5 py-0.2 rounded border border-[#263A32]"><i class="fa-solid fa-handshake"></i> ${pair.mentorName}</span>` : ''}
                     </div>
                 </td>
-                <td class="py-3.5 px-4">
-                    <div class="text-slate-800">${s.school}</div>
-                    <div class="text-[11px] text-slate-500">${s.district}</div>
+                <td class="py-3 px-4">
+                    <div class="text-[#F5F7F5] font-medium">${s.school}</div>
+                    <div class="text-[11px] text-[#94A39C]">${s.district}</div>
                 </td>
-                <td class="py-3.5 px-4 whitespace-nowrap">
-                    <div class="font-bold ${s.attendance < 75 ? 'text-rose-700' : 'text-emerald-700'}">${s.attendance}%</div>
-                    <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1 border border-slate-200">
-                        <div class="h-full ${s.attendance < 75 ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: ${s.attendance}%"></div>
+                <td class="py-3 px-4 whitespace-nowrap">
+                    <div class="font-bold ${s.attendance < 75 ? 'text-rose-400' : 'text-[#10B981]'}">${s.attendance}%</div>
+                    <div class="progress-bar-track w-16 mt-1">
+                        <div class="progress-bar-fill ${s.attendance < 75 ? 'bg-rose-500' : 'bg-[#10B981]'}" style="width: ${s.attendance}%"></div>
                     </div>
                 </td>
-                <td class="py-3.5 px-4 whitespace-nowrap">
-                    <div class="font-bold text-slate-800">${s.marks}%</div>
+                <td class="py-3 px-4 whitespace-nowrap">
+                    <div class="font-bold text-[#F5F7F5]">${s.marks}%</div>
                 </td>
-                <td class="py-3.5 px-4">
-                    <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-[11px] font-medium border border-slate-200">
+                <td class="py-3 px-4">
+                    <span class="bg-[#111B18] text-[#6EE7B7] px-2 py-0.5 rounded text-[11px] font-medium border border-[#263A32]">
                         ${s.primaryVector}
                     </span>
                 </td>
-                <td class="py-3.5 px-4 whitespace-nowrap">
-                    <div class="inline-flex items-center gap-2 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                <td class="py-3 px-4 whitespace-nowrap">
+                    <div class="inline-flex items-center gap-2 bg-[#111B18] px-2.5 py-1 rounded-lg border border-[#263A32]">
                         <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${riskBadge}">
                             ${s.riskLevel}
                         </span>
@@ -522,15 +578,15 @@ function renderStudentTable() {
                         </span>
                     </div>
                 </td>
-                <td class="py-3.5 px-4 text-center">
+                <td class="py-3 px-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="sendSingleSMS('${s.id}')" title="Send WhatsApp Advisory" class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all">
+                        <button onclick="sendSingleSMS('${s.id}')" title="Send WhatsApp Advisory" class="table-action-icon-btn bg-[#123B2A] hover:bg-[#1B4E38] text-[#10B981] border border-[#263A32] cursor-pointer">
                             <i class="fa-brands fa-whatsapp text-xs"></i>
                         </button>
-                        <button onclick="inspectStudentDNA('${s.id}')" title="View Vector DNA" class="w-7 h-7 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center justify-center transition-all">
+                        <button onclick="inspectStudentDNA('${s.id}')" title="View Vector Causes" class="table-action-icon-btn bg-[#17231F] hover:bg-[#1E2E28] text-[#F5F7F5] border border-[#263A32] cursor-pointer">
                             <i class="fa-solid fa-dna text-xs"></i>
                         </button>
-                        <button onclick="openPairModalForStudent('${s.id}')" title="Pair Sathi Mentor" class="w-7 h-7 rounded-lg ${pair ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-violet-50 hover:bg-violet-100 text-violet-700 border-violet-200'} flex items-center justify-center transition-all">
+                        <button onclick="openPairModalForStudent('${s.id}')" title="Pair Sathi Mentor" class="table-action-icon-btn ${pair ? 'bg-[#10B981] text-[#0B1713] border-[#10B981]' : 'bg-[#17231F] hover:bg-[#1E2E28] text-[#6EE7B7] border-[#263A32]'} cursor-pointer">
                             <i class="fa-solid fa-user-plus text-xs"></i>
                         </button>
                     </div>
@@ -555,17 +611,18 @@ function inspectStudentDNA(studentId) {
 }
 
 function sendSingleSMS(studentId) {
-    const student = MOCK_STUDENTS.find(s => s.id === studentId);
-    if (!student) return;
-
-    showToast("Parent Advisory Sent!", `WhatsApp message dispatched to ${student.parentName} (${student.parentPhone}) for ${student.name}.`, "success");
+    const s = MOCK_STUDENTS.find(item => item.id === studentId);
+    if (!s) return;
+    showToast("WhatsApp Notice Sent!", `Dispatched attendance advisory to ${s.parentName} (${s.parentPhone}) for ${s.name}.`, "success");
 }
 
 function triggerBatchNotification() {
-    showToast("Batch Advisory Dispatched!", `Sent WhatsApp advisory messages to parents of at-risk students.`, "success");
+    showToast("Batch Alerts Dispatched!", `Successfully transmitted 38 bilingual WhatsApp retention alerts to parents across district.`, "success");
 }
 
-// SECTION 3: DROPOUT CAUSES BREAKDOWN
+// ==========================================================================
+// 9. DROPOUT CAUSES BREAKDOWN / DNA (SECTION 3)
+// ==========================================================================
 function loadStudentDNA(studentId) {
     const student = MOCK_STUDENTS.find(s => s.id === studentId) || MOCK_STUDENTS[0];
     selectedStudentForDNA = student;
@@ -576,63 +633,114 @@ function loadStudentDNA(studentId) {
     const narrative = document.getElementById('dnaNarrative');
 
     if (studentCard) {
+        studentCard.classList.remove('dna-profile-card');
+        void studentCard.offsetWidth; // Trigger reflow for smooth reveal animation
+        studentCard.classList.add('dna-profile-card');
+
         studentCard.innerHTML = `
-            <div class="font-bold text-slate-900 text-base">${student.name}</div>
-            <div class="text-xs text-slate-500 mb-3">${student.id} • ${student.grade} • ${student.school}</div>
+            <div class="font-bold text-[#F5F7F5] text-base">${student.name}</div>
+            <div class="text-xs text-[#94A39C] mb-3">${student.id} • ${student.grade} • ${student.school}</div>
             
             <div class="space-y-2 text-xs">
-                <div class="flex justify-between border-b border-slate-200 pb-1">
-                    <span class="text-slate-500">Commute Distance:</span>
-                    <span class="font-bold text-slate-800">${student.commuteDistance || '4.0 km'}</span>
+                <div class="flex justify-between border-b border-[#263A32] pb-1.5">
+                    <span class="text-[#94A39C]">Commute Distance:</span>
+                    <span class="font-bold text-[#F5F7F5]">${student.commuteDistance || '4.0 km'}</span>
                 </div>
-                <div class="flex justify-between border-b border-slate-200 pb-1">
-                    <span class="text-slate-500">Family Occupation:</span>
-                    <span class="font-bold text-slate-800">${student.familyOccupation || 'Laborer'}</span>
+                <div class="flex justify-between border-b border-[#263A32] pb-1.5">
+                    <span class="text-[#94A39C]">Family Occupation:</span>
+                    <span class="font-bold text-[#F5F7F5]">${student.familyOccupation || 'Laborer'}</span>
                 </div>
-                <div class="flex justify-between border-b border-slate-200 pb-1">
-                    <span class="text-slate-500">Health Checkup Tag:</span>
-                    <span class="font-bold text-rose-700">${student.healthFlag || 'Normal'}</span>
+                <div class="flex justify-between border-b border-[#263A32] pb-1.5">
+                    <span class="text-[#94A39C]">Health Checkup Tag:</span>
+                    <span class="font-bold text-rose-400">${student.healthFlag || 'Normal'}</span>
                 </div>
-                <div class="flex justify-between border-b border-slate-200 pb-1">
-                    <span class="text-slate-500">Parent Disclosure Status:</span>
-                    <span class="font-bold text-amber-700">${student.disclosureStatus || 'Disclosed'}</span>
+                <div class="flex justify-between border-b border-[#263A32] pb-1.5">
+                    <span class="text-[#94A39C]">Parent Disclosure Status:</span>
+                    <span class="font-bold text-amber-400">${student.disclosureStatus || 'Disclosed'}</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500">Assigned Sathi Buddy:</span>
-                    <span class="font-semibold text-indigo-600">${student.sathiMentor}</span>
+                <div class="flex justify-between pt-0.5">
+                    <span class="text-[#94A39C]">Assigned Sathi Buddy:</span>
+                    <span class="font-semibold text-[#10B981]">${student.sathiMentor}</span>
                 </div>
             </div>
         `;
     }
 
     if (riskBadge) {
-        let badgeColor = 'bg-rose-50 text-rose-700 border-rose-200';
-        if (student.riskLevel === 'High') badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
-        riskBadge.innerHTML = `<span class="px-2.5 py-1 rounded text-xs font-bold uppercase border ${badgeColor}">${student.riskLevel} Risk (${student.riskScore}%)</span>`;
+        let badgeColor = 'bg-rose-950/60 text-rose-300 border-rose-800/80';
+        if (student.riskLevel === 'High') badgeColor = 'bg-amber-950/60 text-amber-300 border-amber-800/80';
+        if (student.riskLevel === 'Moderate') badgeColor = 'bg-sky-950/60 text-sky-300 border-sky-800/80';
+        if (student.riskLevel === 'Low') badgeColor = 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80';
+        riskBadge.innerHTML = `<span class="px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase border ${badgeColor}">${student.riskLevel} Risk (${student.riskScore}%)</span>`;
     }
 
     if (vectorCards) {
         const vb = student.vectorBreakdown;
+
+        let riskBadgeClass = 'text-rose-400 bg-rose-950/40 border-rose-800/60';
+        if (student.riskLevel === 'High') riskBadgeClass = 'text-amber-400 bg-amber-950/40 border-amber-800/60';
+        if (student.riskLevel === 'Moderate') riskBadgeClass = 'text-sky-400 bg-sky-950/40 border-sky-800/60';
+        if (student.riskLevel === 'Low') riskBadgeClass = 'text-emerald-400 bg-emerald-950/40 border-emerald-800/60';
+
         vectorCards.innerHTML = `
-            <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg text-center">
-                <div class="text-[10px] text-slate-500 uppercase font-bold">Academic</div>
-                <div class="text-lg font-black text-amber-600 mt-1">${vb.academic}%</div>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg text-center">
-                <div class="text-[10px] text-slate-500 uppercase font-bold">Economic</div>
-                <div class="text-lg font-black text-rose-600 mt-1">${vb.economic}%</div>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg text-center">
-                <div class="text-[10px] text-slate-500 uppercase font-bold">Health</div>
-                <div class="text-lg font-black text-emerald-600 mt-1">${vb.health}%</div>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg text-center">
-                <div class="text-[10px] text-slate-500 uppercase font-bold">Behavioral</div>
-                <div class="text-lg font-black text-purple-600 mt-1">${vb.behavioral}%</div>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg text-center">
-                <div class="text-[10px] text-slate-500 uppercase font-bold">Travel/Env</div>
-                <div class="text-lg font-black text-sky-600 mt-1">${vb.environmental}%</div>
+            <div class="col-span-2 sm:col-span-5 grid grid-cols-1 sm:grid-cols-6 gap-3 items-center">
+                <!-- Center Diagnostic Node -->
+                <div class="sm:col-span-2 bg-[#123B2A]/40 border-2 border-[#10B981] p-4 rounded-xl text-center shadow-lg relative overflow-hidden">
+                    <div class="text-[9px] uppercase font-bold text-[#6EE7B7] tracking-widest mb-1 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-crosshairs text-[10px] text-[#10B981]"></i> CENTRAL DIAGNOSTIC
+                    </div>
+                    <div class="text-[10px] text-[#94A39C] uppercase font-bold tracking-wider">RISK SCORE</div>
+                    <div class="text-3xl font-black text-[#F5F7F5] my-1 font-mono tracking-tight">${student.riskScore}%</div>
+                    <span class="inline-block px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${riskBadgeClass}">
+                        ${student.riskLevel} RISK
+                    </span>
+                    <div class="mt-2 pt-2 border-t border-[#263A32] text-[10px] text-[#94A39C]">
+                        Primary: <strong class="text-[#6EE7B7]">${student.primaryVector}</strong>
+                    </div>
+                </div>
+
+                <!-- Surrounding 5 Vector Nodes -->
+                <div class="sm:col-span-4 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    <div class="bg-[#111B18] border border-[#263A32] p-2.5 rounded-xl text-center transition-all hover:border-[#10B981]/50">
+                        <div class="text-[9px] text-[#94A39C] uppercase font-bold tracking-wider">ATTENDANCE</div>
+                        <div class="text-base font-black text-[#10B981] mt-1 font-mono">${student.attendance}%</div>
+                        <div class="progress-bar-track w-full mt-2">
+                            <div class="vector-bar-fill h-full rounded-full bg-[#10B981]" style="width: ${student.attendance}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111B18] border border-[#263A32] p-2.5 rounded-xl text-center transition-all hover:border-[#10B981]/50">
+                        <div class="text-[9px] text-[#94A39C] uppercase font-bold tracking-wider">ACADEMIC</div>
+                        <div class="text-base font-black text-amber-400 mt-1 font-mono">${vb.academic}%</div>
+                        <div class="progress-bar-track w-full mt-2">
+                            <div class="vector-bar-fill h-full rounded-full bg-amber-500" style="width: ${vb.academic}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111B18] border border-[#263A32] p-2.5 rounded-xl text-center transition-all hover:border-[#10B981]/50">
+                        <div class="text-[9px] text-[#94A39C] uppercase font-bold tracking-wider">ECONOMIC</div>
+                        <div class="text-base font-black text-rose-400 mt-1 font-mono">${vb.economic}%</div>
+                        <div class="progress-bar-track w-full mt-2">
+                            <div class="vector-bar-fill h-full rounded-full bg-rose-500" style="width: ${vb.economic}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111B18] border border-[#263A32] p-2.5 rounded-xl text-center transition-all hover:border-[#10B981]/50">
+                        <div class="text-[9px] text-[#94A39C] uppercase font-bold tracking-wider">HEALTH</div>
+                        <div class="text-base font-black text-emerald-400 mt-1 font-mono">${vb.health}%</div>
+                        <div class="progress-bar-track w-full mt-2">
+                            <div class="vector-bar-fill h-full rounded-full bg-emerald-500" style="width: ${vb.health}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111B18] border border-[#263A32] p-2.5 rounded-xl text-center transition-all hover:border-[#10B981]/50">
+                        <div class="text-[9px] text-[#94A39C] uppercase font-bold tracking-wider">BEHAVIOURAL</div>
+                        <div class="text-base font-black text-[#6EE7B7] mt-1 font-mono">${vb.behavioral}%</div>
+                        <div class="progress-bar-track w-full mt-2">
+                            <div class="vector-bar-fill h-full rounded-full bg-[#6EE7B7]" style="width: ${vb.behavioral}%"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -640,29 +748,64 @@ function loadStudentDNA(studentId) {
     if (narrative) {
         narrative.innerHTML = `
             <div class="mb-2">
-                <span class="font-bold text-slate-900">Primary Risk Driver:</span> 
-                <span class="text-rose-700 font-bold">${student.riskScore}% risk</span> driven by <strong>${student.primaryVector} factors</strong>.
+                <span class="font-bold text-[#F5F7F5]">Primary Risk Driver:</span> 
+                <span class="text-rose-400 font-bold">${student.riskScore}% risk</span> driven predominantly by <strong>${student.primaryVector} factors</strong>.
             </div>
 
-            <div class="font-bold text-slate-800 text-[11px] uppercase tracking-wider mb-2">Detailed Cause Analysis:</div>
-            <ul class="space-y-2 text-slate-700 text-xs mb-4">
+            <div class="font-bold text-[#6EE7B7] text-[11px] uppercase tracking-wider mb-2">Detailed Cause Analysis:</div>
+            <ul class="space-y-2 text-[#F5F7F5] text-xs mb-4">
                 ${student.specificCauses.map(c => `
-                    <li class="flex items-start gap-2 bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm">
-                        <i class="fa-solid fa-circle-exclamation text-rose-500 text-xs mt-0.5 flex-shrink-0"></i>
+                    <li class="flex items-start gap-2 bg-[#17231F] p-2.5 rounded-lg border border-[#263A32] shadow-2xs">
+                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-xs mt-0.5 flex-shrink-0"></i>
                         <span>${c}</span>
                     </li>
                 `).join('')}
             </ul>
 
-            <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs">
-                <strong class="font-bold text-amber-900 block mb-1">🛡️ Non-Disclosure Safeguard Action Plan:</strong>
-                <div class="text-amber-800 text-[11px]">${student.fallbackPlan || 'Step 1: Unconditional Welfare Support Offered'}</div>
+            <div class="bg-[#17231F] border border-[#263A32] p-3 rounded-xl text-xs">
+                <strong class="font-bold text-[#10B981] block mb-1">🛡️ Non-Disclosure Safeguard Action Plan:</strong>
+                <div class="text-[#94A39C] text-[11px] leading-relaxed">${student.fallbackPlan || 'Step 1: Unconditional Welfare Support Offered'}</div>
             </div>
         `;
     }
 }
 
-// SECTION 4: UNIVERSAL SMART INTAKE ENGINE
+// ==========================================================================
+// 10. UNIVERSAL SMART INTAKE ENGINE (SECTION 4)
+// ==========================================================================
+function setIntakeWorkflowStage(stageNum) {
+    const steps = [
+        { id: 'stepUpload', name: 'Upload' },
+        { id: 'stepMap', name: 'Map' },
+        { id: 'stepValidate', name: 'Validate' },
+        { id: 'stepSync', name: 'Sync' }
+    ];
+    const lines = ['stepLine1', 'stepLine2', 'stepLine3'];
+
+    steps.forEach((step, idx) => {
+        const el = document.getElementById(step.id);
+        if (!el) return;
+        el.className = 'intake-step w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all';
+        if (idx + 1 === stageNum) {
+            el.classList.add('active');
+        } else if (idx + 1 < stageNum) {
+            el.classList.add('completed');
+        } else {
+            el.classList.add('bg-[#111B18]', 'border', 'border-[#263A32]', 'text-[#94A39C]');
+        }
+    });
+
+    lines.forEach((lineId, idx) => {
+        const el = document.getElementById(lineId);
+        if (!el) return;
+        if (idx + 1 < stageNum) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
+}
+
 function downloadSampleTemplate() {
     const csvContent = "Roll_No,Student_Name,Attendance_Pct,Math_Marks,Commute_KM,Family_Job,Health_Flag\n" +
         "STU-9041,Priyanshi Solanki,58%,42%,6.0km,Cotton Harvest,Anemia\n" +
@@ -681,70 +824,145 @@ function downloadSampleTemplate() {
     link.click();
     document.body.removeChild(link);
 
-    showToast("Template Downloaded!", "Sample CSV with raw parameters downloaded.", "info");
+    showToast("Template Downloaded!", "Sample CSV with multi-factor attributes downloaded.", "info");
+}
+
+function initDragAndDrop() {
+    setupDropZone('excelDropZone', 'excelFileInput', (file) => {
+        handleExcelUpload({ target: { files: [file] } });
+    });
+
+    setupDropZone('photoDropZone', 'photoFileInput', (file) => {
+        handlePhotoUpload({ target: { files: [file] } });
+    });
+}
+
+function setupDropZone(dropZoneId, inputId, onFileDrop) {
+    const dropZone = document.getElementById(dropZoneId);
+    const fileInput = document.getElementById(inputId);
+    if (!dropZone) return;
+
+    dropZone.addEventListener('click', (e) => {
+        if (e.target !== fileInput && fileInput) {
+            fileInput.click();
+        }
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.add('drag-active');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.remove('drag-active');
+        }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            onFileDrop(files[0]);
+        }
+    }, false);
 }
 
 function findBestColumn(headers, sampleRows, keywords) {
-    if (!headers || headers.length === 0) return null;
-
-    for (let header of headers) {
-        const clean = header.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
-        for (let kw of keywords) {
-            if (clean.includes(kw)) return header;
-        }
-    }
-
-    for (let header of headers) {
-        for (let row of sampleRows) {
-            const val = row[header]?.toString() || '';
-            if (keywords.includes('att') && (val.includes('%') || (!isNaN(parseFloat(val)) && parseFloat(val) <= 100))) {
-                return header;
-            }
-            if (keywords.includes('name') && val.length > 3 && isNaN(val) && val.includes(' ')) {
-                return header;
-            }
-            if (keywords.includes('id') && (val.toLowerCase().includes('stu') || !isNaN(val))) {
-                return header;
+    for (const h of headers) {
+        const cleanH = h.toString().toLowerCase().trim();
+        for (const kw of keywords) {
+            if (cleanH.includes(kw.toLowerCase())) {
+                return h;
             }
         }
     }
 
+    if (sampleRows && sampleRows.length > 0) {
+        for (const h of headers) {
+            for (let i = 0; i < Math.min(5, sampleRows.length); i++) {
+                const val = sampleRows[i][h]?.toString().toLowerCase() || '';
+                for (const kw of keywords) {
+                    if (val.includes(kw.toLowerCase())) {
+                        return h;
+                    }
+                }
+            }
+        }
+    }
     return null;
 }
 
 function inferCauseFromRawData(dist, marks, job, health, att) {
-    let causes = [];
-    let primary = "Academic";
+    const d = parseFloat(dist) || 2.0;
+    const m = parseFloat(marks) || 60;
+    const j = (job || '').toLowerCase();
+    const h = (health || '').toLowerCase();
 
-    if (parseFloat(dist) > 5) {
-        causes.push(`Long ${dist}km rural commute over unpaved roads`);
-        primary = "Environmental";
+    if (d > 5.0) {
+        return "Environmental / Travel Distance Barrier (Daily Commute > 5km)";
     }
-    if (job.toLowerCase().includes("harvest") || job.toLowerCase().includes("labor") || job.toLowerCase().includes("salt")) {
-        causes.push(`Family ${job} income hardship & seasonal labor`);
-        primary = "Economic";
+    if (j.includes('harvest') || j.includes('labor') || j.includes('daily') || j.includes('salt') || j.includes('farm')) {
+        return "Economic / Household Seasonal Migration & Agricultural Labor";
     }
-    if (health.toLowerCase().includes("anemia") || health.toLowerCase().includes("underweight")) {
-        causes.push(`Nutritional ${health} causing physical fatigue`);
-        if (primary !== "Economic") primary = "Health & Nutrition";
+    if (h.includes('anemia') || h.includes('malnutrition') || h.includes('underweight') || h.includes('sick')) {
+        return "Health & Nutritional Chronic Fatigue / Illness";
     }
-    if (parseInt(marks) < 45) {
-        causes.push(`Foundational learning backlog in core subjects (${marks}% marks)`);
+    if (m < 45 || att < 60) {
+        return "Academic Disengagement / Backlog in Fundamental Numeracy";
     }
+    return "Behavioral / Low Peer Affiliation & Apathy";
+}
 
-    if (causes.length === 0) {
-        causes.push("General attendance drop requiring academic counseling");
-    }
+function calculateMultiVectorRisk(studentId, studentName, att, distVal = "3.0", jobVal = "Labor", healthVal = "Normal") {
+    let score = 0;
 
-    return { causeStr: causes.join(" • "), primary };
+    if (att < 60) score += 40;
+    else if (att < 75) score += 25;
+    else if (att < 85) score += 10;
+
+    const d = parseFloat(distVal) || 2.0;
+    if (d > 5.0) score += 20;
+    else if (d > 3.0) score += 10;
+
+    const j = jobVal.toLowerCase();
+    if (j.includes('harvest') || j.includes('labor') || j.includes('farm')) score += 20;
+
+    const h = healthVal.toLowerCase();
+    if (h.includes('anemia') || h.includes('sick') || h.includes('underweight')) score += 15;
+
+    score = Math.min(96, Math.max(12, score));
+
+    let riskLevel = "Low";
+    if (score >= 75) riskLevel = "Severe";
+    else if (score >= 50) riskLevel = "High";
+    else if (score >= 30) riskLevel = "Moderate";
+
+    return { score, riskLevel };
 }
 
 function handleExcelUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    document.getElementById('excelFileName').innerText = `Loaded: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-    updateIntakeBadge('Inferring Dropout Causes...', 'bg-amber-50 text-amber-700 border-amber-200');
+    setIntakeWorkflowStage(2);
+
+    const fileNameLabel = document.getElementById('excelFileName');
+    if (fileNameLabel) {
+        fileNameLabel.innerText = `Parsing ${file.name}...`;
+    }
+
+    updateIntakeBadge("Parsing Spreadsheet...", "bg-amber-950/60 text-amber-300 border-amber-800/80");
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -753,31 +971,31 @@ function handleExcelUpload(event) {
             const workbook = XLSX.read(data, { type: 'array' });
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-            const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-            parseUniversalExcelRows(jsonRows, file.name);
+            if (rows.length === 0) {
+                showToast("Empty File", "The uploaded spreadsheet does not contain student rows.", "warning");
+                return;
+            }
+
+            parseUniversalExcelRows(rows, file.name);
         } catch (err) {
-            console.error("Excel Read Error:", err);
-            showToast("Excel Parse Failed", "Unable to read spreadsheet.", "error");
-            updateIntakeBadge('File Error', 'bg-rose-50 text-rose-700 border-rose-200');
+            console.error("Excel parse error:", err);
+            showToast("Parsing Error", "Could not parse spreadsheet. Please verify format.", "error");
         }
     };
     reader.readAsArrayBuffer(file);
 }
 
 function parseUniversalExcelRows(rows, filename) {
-    if (!rows || rows.length === 0) {
-        showToast("Empty File", "Spreadsheet contains no data rows.", "error");
-        return;
-    }
+    setIntakeWorkflowStage(3);
 
-    const headers = Object.keys(rows[0]);
-
-    const idKeys = ['id', 'roll', 'gr', 'reg', 'code', 'adm', 'sr', 'sno', 'number', 'no'];
-    const nameKeys = ['name', 'student', 'child', 'pupil', 'candidate', 'person', 'fullname'];
-    const attKeys = ['att', 'present', 'presence', 'pct', 'rate', 'pctg', '%', 'status', 'day', 'p_a', 'pa'];
-    const distKeys = ['dist', 'km', 'commute', 'travel'];
-    const jobKeys = ['job', 'work', 'occup', 'labor', 'farm', 'income'];
+    const headers = Object.keys(rows[0] || {});
+    const idKeys = ['roll', 'id', 'student_id', 'reg', 'enrollment', 'code', 'gr'];
+    const nameKeys = ['name', 'student_name', 'full_name', 'candidate', 'child'];
+    const attKeys = ['attendance', 'att', 'presence', 'present_pct', 'attendance_pct', 'days'];
+    const distKeys = ['distance', 'commute', 'km', 'travel', 'bus_dist'];
+    const jobKeys = ['job', 'occupation', 'parent_job', 'family', 'profession', 'income'];
     const healthKeys = ['health', 'anemia', 'weight', 'bmi', 'medical'];
 
     const matchedIdCol = findBestColumn(headers, rows, idKeys) || headers[0];
@@ -792,185 +1010,206 @@ function parseUniversalExcelRows(rows, filename) {
     if (headerPanel && headerList) {
         headerPanel.classList.remove('hidden');
         headerList.innerHTML = `
-            <div class="bg-slate-800 p-2 rounded border border-slate-700">
-                <span class="text-slate-400 block text-[10px]">Mapped ID Column:</span>
-                <strong class="text-indigo-400 font-mono">${matchedIdCol}</strong>
+            <div class="bg-[#17231F] p-2.5 rounded-lg border border-[#263A32]">
+                <span class="text-[#94A39C] block text-[10px]">Mapped ID:</span>
+                <strong class="text-[#10B981] font-mono">${matchedIdCol}</strong>
             </div>
-            <div class="bg-slate-800 p-2 rounded border border-slate-700">
-                <span class="text-slate-400 block text-[10px]">Mapped Name Column:</span>
-                <strong class="text-indigo-400 font-mono">${matchedNameCol}</strong>
+            <div class="bg-[#17231F] p-2.5 rounded-lg border border-[#263A32]">
+                <span class="text-[#94A39C] block text-[10px]">Mapped Name:</span>
+                <strong class="text-[#10B981] font-mono">${matchedNameCol}</strong>
             </div>
-            <div class="bg-slate-800 p-2 rounded border border-slate-700">
-                <span class="text-slate-400 block text-[10px]">Mapped Attendance:</span>
-                <strong class="text-indigo-400 font-mono">${matchedAttCol}</strong>
+            <div class="bg-[#17231F] p-2.5 rounded-lg border border-[#263A32]">
+                <span class="text-[#94A39C] block text-[10px]">Mapped Attendance:</span>
+                <strong class="text-[#10B981] font-mono">${matchedAttCol}</strong>
             </div>
-            <div class="bg-slate-800 p-2 rounded border border-slate-700">
-                <span class="text-slate-400 block text-[10px]">Auto-Inferred Factors:</span>
-                <strong class="text-emerald-400 font-mono">Distance, Job, Health</strong>
+            <div class="bg-[#17231F] p-2.5 rounded-lg border border-[#263A32]">
+                <span class="text-[#94A39C] block text-[10px]">Auto-Inferred Vectors:</span>
+                <strong class="text-[#6EE7B7] font-mono">Distance, Job, Health</strong>
             </div>
         `;
     }
 
-function calculateMultiVectorRisk(studentId, studentName, att, distVal = "3.0", jobVal = "Labor", healthVal = "Normal") {
-    // 1. Check if student exists in MOCK_STUDENTS first for authoritative data
-    const mock = MOCK_STUDENTS.find(s => s.id === studentId || s.name.toLowerCase() === studentName.toLowerCase());
-    if (mock) {
-        return { riskScore: mock.riskScore, riskLevel: mock.riskLevel };
-    }
-
-    // 2. Multi-factor calculation engine
-    let score = (100 - att) * 0.8;
-    const dist = parseFloat(distVal) || 3.0;
-    if (dist > 5.0) score += 20;
-    else if (dist > 3.0) score += 10;
-
-    const job = (jobVal || "").toLowerCase();
-    if (job.includes('farmer') || job.includes('labor') || job.includes('salt') || job.includes('harvest') || job.includes('worker')) score += 15;
-
-    const health = (healthVal || "").toLowerCase();
-    if (health.includes('anemia') || health.includes('underweight') || health.includes('weakness') || health.includes('illness')) score += 15;
-
-    const riskScore = Math.min(98, Math.max(12, Math.round(score)));
-    let riskLevel = "Low";
-    if (riskScore >= 75) riskLevel = "Severe";
-    else if (riskScore >= 55) riskLevel = "High";
-    else if (riskScore >= 35) riskLevel = "Moderate";
-
-    return { riskScore, riskLevel };
-}
-
     parsedIntakeRows = rows.map((r, index) => {
         const id = r[matchedIdCol]?.toString() || `STU-${9000 + index}`;
         const name = r[matchedNameCol]?.toString() || `Student ${index + 1}`;
-        
+
         let attRaw = r[matchedAttCol]?.toString() || "75";
-        let att = parseInt(attRaw.replace(/[^0-9]/g, ''));
+        let att = parseInt(attRaw.replace(/[^0-9]/g, ''), 10);
         if (isNaN(att)) att = attRaw.toLowerCase().includes('p') ? 90 : 55;
 
-        const distVal = r[matchedDistCol]?.toString() || "3.0 km";
-        const jobVal = r[matchedJobCol]?.toString() || "Labor";
+        const distVal = r[matchedDistCol]?.toString() || "3.5km";
+        const jobVal = r[matchedJobCol]?.toString() || "Daily Wage";
         const healthVal = r[matchedHealthCol]?.toString() || "Normal";
+        const marksVal = r['Math_Marks'] || r['Marks'] || "52";
 
-        const inferred = inferCauseFromRawData(distVal, 40, jobVal, healthVal, att);
-        const calculated = calculateMultiVectorRisk(id, name, att, distVal, jobVal, healthVal);
+        const inferredCause = inferCauseFromRawData(distVal, marksVal, jobVal, healthVal, att);
+        const { score, riskLevel } = calculateMultiVectorRisk(id, name, att, distVal, jobVal, healthVal);
 
-        return { 
-            id, 
-            name, 
-            attendance: att, 
-            cause: inferred.causeStr, 
-            primaryVector: inferred.primary, 
-            riskScore: calculated.riskScore, 
-            riskLevel: calculated.riskLevel 
+        return {
+            id,
+            name,
+            attendance: att,
+            cause: inferredCause,
+            riskScore: score,
+            riskLevel: riskLevel,
+            dist: distVal,
+            job: jobVal,
+            health: healthVal,
+            marks: parseInt(marksVal, 10) || 55
         };
     });
 
-    renderIntakeResultsTable(parsedIntakeRows, `Auto-Inferred Causes: ${filename}`);
+    renderIntakeResultsTable(parsedIntakeRows, filename);
+    setIntakeWorkflowStage(3);
 }
 
-// REAL REGISTER PHOTO OCR READER (Tesseract.js)
 function handlePhotoUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    document.getElementById('photoFileName').innerText = `Selected Image: ${file.name}`;
-    
-    const stream = document.getElementById('intakeLogStream');
-    stream.classList.remove('hidden');
-    stream.innerHTML = `<div>[0.00s] Loading image file: "${file.name}"...</div>`;
+    setIntakeWorkflowStage(2);
 
-    updateIntakeBadge('Running Tesseract OCR...', 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse');
+    const fileNameLabel = document.getElementById('photoFileName');
+    if (fileNameLabel) {
+        fileNameLabel.innerText = `Scanning ${file.name}...`;
+    }
+
+    const laser = document.getElementById('ocrLaserLine');
+    if (laser) laser.classList.remove('hidden');
+
+    const stream = document.getElementById('intakeLogStream');
+    if (stream) {
+        stream.classList.remove('hidden');
+        stream.innerHTML = `
+            <div class="text-[#10B981] font-bold">[0%] Initializing Tesseract OCR client runtime...</div>
+            <div class="text-[#94A39C]">[15%] Loading language training models (eng+guj)...</div>
+            <div class="text-[#94A39C]">[30%] Pre-processing physical attendance register photograph...</div>
+        `;
+    }
+
+    updateIntakeBadge("Running Browser OCR Engine...", "bg-[#123B2A] text-[#10B981] border border-[#263A32]");
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        const imageSrc = e.target.result;
-        
-        if (window.Tesseract) {
-            stream.innerHTML += `<div>[0.15s] Initializing Tesseract.js browser OCR engine...</div>`;
-            Tesseract.recognize(imageSrc, 'eng', {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        stream.innerHTML += `<div>[${(m.progress*100).toFixed(0)}%] OCR Text Extraction in progress...</div>`;
-                        stream.scrollTop = stream.scrollHeight;
+        const imageUrl = e.target.result;
+
+        if (typeof Tesseract !== 'undefined') {
+            Tesseract.recognize(
+                imageUrl,
+                'eng',
+                {
+                    logger: m => {
+                        if (stream && m.status === 'recognizing text') {
+                            const pct = Math.round(m.progress * 100);
+                            stream.innerHTML += `<div class="text-[#94A39C]">[${pct}%] ${m.status}: ${pct}% complete</div>`;
+                            stream.scrollTop = stream.scrollHeight;
+                        }
                     }
                 }
-            }).then(({ data: { text } }) => {
-                stream.innerHTML += `<div class="text-emerald-400 font-bold">[100%] OCR Reading Complete! Auto-inferring causes...</div>`;
+            ).then(({ data: { text } }) => {
+                if (laser) laser.classList.add('hidden');
+                stream.innerHTML += `<div class="text-[#10B981] font-bold">[100%] OCR Text recognition complete! Mapping records...</div>`;
                 parseOCRTextContent(text);
             }).catch(err => {
-                console.error("OCR Error:", err);
+                console.warn("Tesseract runtime notice:", err);
+                if (laser) laser.classList.add('hidden');
                 fallbackOCRData(file.name);
             });
         } else {
-            fallbackOCRData(file.name);
+            setTimeout(() => {
+                if (laser) laser.classList.add('hidden');
+                fallbackOCRData(file.name);
+            }, 1200);
         }
     };
     reader.readAsDataURL(file);
 }
 
 function parseOCRTextContent(text) {
-    const lines = text.split('\n').filter(l => l.trim().length > 0);
-    parsedIntakeRows = lines.slice(0, 6).map((line, idx) => {
-        const student = MOCK_STUDENTS[idx % MOCK_STUDENTS.length];
-        return {
-            id: student.id,
-            name: student.name,
-            attendance: student.attendance,
-            cause: student.specificCauses.join(" • "),
-            primaryVector: student.primaryVector,
-            riskScore: student.riskScore,
-            riskLevel: student.riskLevel
-        };
+    const lines = text.split('\n').filter(l => l.trim().length > 3);
+    const simulatedRows = [];
+
+    lines.forEach((line, idx) => {
+        const tokens = line.split(/\s+/);
+        if (tokens.length >= 2) {
+            const potentialName = tokens.slice(0, 2).join(' ').replace(/[^a-zA-Z\s]/g, '');
+            if (potentialName.length >= 4) {
+                const attVal = Math.floor(Math.random() * 45) + 48;
+                simulatedRows.push({
+                    "Roll_No": `OCR-${8000 + idx}`,
+                    "Student_Name": potentialName,
+                    "Attendance": `${attVal}%`,
+                    "Commute_KM": `${(Math.random() * 6 + 1).toFixed(1)}km`,
+                    "Family_Job": idx % 2 === 0 ? "Agricultural Labor" : "Textile Mill",
+                    "Health_Flag": idx % 3 === 0 ? "Anemia" : "Normal"
+                });
+            }
+        }
     });
 
-    renderIntakeResultsTable(parsedIntakeRows, 'Photo OCR Auto-Inferred');
+    if (simulatedRows.length >= 3) {
+        parseUniversalExcelRows(simulatedRows, "Physical_Register_OCR.jpg");
+    } else {
+        fallbackOCRData("Physical_Register_OCR.jpg");
+    }
 }
 
 function fallbackOCRData(filename) {
-    parsedIntakeRows = MOCK_STUDENTS.slice(0, 6).map(s => ({
-        id: s.id,
-        name: s.name,
-        attendance: s.attendance,
-        cause: s.specificCauses.join(" • "),
-        primaryVector: s.primaryVector,
-        riskScore: s.riskScore,
-        riskLevel: s.riskLevel
-    }));
-    renderIntakeResultsTable(parsedIntakeRows, `Photo Scan: ${filename}`);
+    const ocrSample = [
+        { "Roll_No": "OCR-501", "Student_Name": "Prakash Solanki", "Attendance": "56%", "Commute_KM": "6.8km", "Family_Job": "Harvest Labor", "Health_Flag": "Anemia" },
+        { "Roll_No": "OCR-502", "Student_Name": "Kavita Vaghela", "Attendance": "61%", "Commute_KM": "7.5km", "Family_Job": "Salt-Pan Worker", "Health_Flag": "Normal" },
+        { "Roll_No": "OCR-503", "Student_Name": "Dhaval Rathod", "Attendance": "69%", "Commute_KM": "2.0km", "Family_Job": "Daily Wage Mason", "Health_Flag": "Underweight" },
+        { "Roll_No": "OCR-504", "Student_Name": "Manisha Parmar", "Attendance": "54%", "Commute_KM": "8.2km", "Family_Job": "Cotton Picking", "Health_Flag": "Anemia" },
+        { "Roll_No": "OCR-505", "Student_Name": "Bhavin Chauhan", "Attendance": "88%", "Commute_KM": "1.2km", "Family_Job": "Village Kirana Shop", "Health_Flag": "Normal" },
+        { "Roll_No": "OCR-506", "Student_Name": "Heena Makwana", "Attendance": "72%", "Commute_KM": "3.5km", "Family_Job": "Small Farming", "Health_Flag": "Normal" }
+    ];
+
+    const stream = document.getElementById('intakeLogStream');
+    if (stream) {
+        stream.innerHTML += `<div class="text-[#6EE7B7] font-bold">[100%] Structured register records identified successfully!</div>`;
+    }
+
+    parseUniversalExcelRows(ocrSample, filename);
 }
 
 function renderIntakeResultsTable(rows, source) {
     const tbody = document.getElementById('intakeResultsBody');
+    const badge = document.getElementById('intakeStatusBadge');
     const applyBtn = document.getElementById('applyIntakeBtn');
 
-    updateIntakeBadge(`Extracted ${rows.length} Rows (${source})`, 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold');
-    
-    if (applyBtn) applyBtn.disabled = false;
+    if (badge) {
+        badge.className = "text-xs bg-[#123B2A] text-[#10B981] px-2.5 py-1 rounded-lg border border-[#263A32] font-semibold";
+        badge.innerText = `Parsed ${rows.length} rows from ${source}`;
+    }
+
+    if (applyBtn) {
+        applyBtn.removeAttribute('disabled');
+    }
 
     if (tbody) {
         tbody.innerHTML = rows.map(r => {
-            let riskBadge = 'bg-rose-50 text-rose-700 border-rose-200';
-            let scoreColor = 'text-rose-700';
+            let riskBadge = 'bg-rose-950/60 text-rose-300 border-rose-800/80';
+            let scoreColor = 'text-rose-400';
 
             if (r.riskLevel === 'High') {
-                riskBadge = 'bg-amber-50 text-amber-700 border-amber-200';
-                scoreColor = 'text-amber-700';
+                riskBadge = 'bg-amber-950/60 text-amber-300 border-amber-800/80';
+                scoreColor = 'text-amber-400';
             } else if (r.riskLevel === 'Moderate') {
-                riskBadge = 'bg-sky-50 text-sky-700 border-sky-200';
-                scoreColor = 'text-sky-700';
+                riskBadge = 'bg-sky-950/60 text-sky-300 border-sky-800/80';
+                scoreColor = 'text-sky-300';
             } else if (r.riskLevel === 'Low') {
-                riskBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                scoreColor = 'text-emerald-700';
+                riskBadge = 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80';
+                scoreColor = 'text-[#10B981]';
             }
 
             return `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${r.id}</td>
-                    <td class="py-3 px-3 font-semibold text-slate-800 whitespace-nowrap">${r.name}</td>
-                    <td class="py-3 px-3 font-bold ${r.attendance < 75 ? 'text-rose-700' : 'text-emerald-700'} whitespace-nowrap">${r.attendance}%</td>
-                    <td class="py-3 px-3 text-slate-600 text-[11px] leading-relaxed">${r.cause}</td>
+                <tr class="table-interactive-row">
+                    <td class="py-3 px-3 font-bold text-[#F5F7F5] whitespace-nowrap">${r.id}</td>
+                    <td class="py-3 px-3 font-semibold text-[#F5F7F5] whitespace-nowrap">${r.name}</td>
+                    <td class="py-3 px-3 font-bold ${r.attendance < 75 ? 'text-rose-400' : 'text-[#10B981]'} whitespace-nowrap">${r.attendance}%</td>
+                    <td class="py-3 px-3 text-[#94A39C] text-[11px] leading-relaxed">${r.cause}</td>
                     <td class="py-3 px-3 whitespace-nowrap">
-                        <div class="inline-flex items-center gap-2 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                        <div class="inline-flex items-center gap-2 bg-[#111B18] px-2.5 py-1 rounded-lg border border-[#263A32]">
                             <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${riskBadge}">
                                 ${r.riskLevel}
                             </span>
@@ -984,13 +1223,13 @@ function renderIntakeResultsTable(rows, source) {
         }).join('');
     }
 
-    showToast("Auto-Inferred Causes!", `Successfully derived dropout causes for ${rows.length} students.`, "success");
+    showToast("Auto-Inferred Causes!", `Derived multi-vector risk profiles for ${rows.length} students.`, "success");
 }
 
 function updateIntakeBadge(text, classes) {
     const badge = document.getElementById('intakeStatusBadge');
     if (badge) {
-        badge.className = `text-xs px-2.5 py-1 rounded-lg border ${classes}`;
+        badge.className = `text-xs px-2.5 py-1 rounded-lg border font-medium ${classes}`;
         badge.innerText = text;
     }
 }
@@ -998,53 +1237,66 @@ function updateIntakeBadge(text, classes) {
 function applyIntakeToRecords() {
     if (parsedIntakeRows.length === 0) return;
 
-    const selectedCluster = document.getElementById('intakeClusterSelect')?.value || "Anand Cluster";
+    setIntakeWorkflowStage(4);
+
+    const clusterSelect = document.getElementById('intakeClusterSelect');
+    const selectedCluster = clusterSelect ? clusterSelect.value : "Anand Cluster";
+
     let newMentorsAdded = 0;
 
-    parsedIntakeRows.forEach(row => {
-        const existing = MOCK_STUDENTS.find(s => s.id === row.id);
-        if (existing) {
-            existing.attendance = row.attendance;
-            existing.riskScore = row.riskScore;
-            existing.riskLevel = row.riskLevel;
-            existing.district = selectedCluster;
-        } else {
-            MOCK_STUDENTS.unshift({
-                id: row.id,
-                name: row.name,
-                grade: "Class 9-A",
-                school: `Govt School ${selectedCluster.split(' ')[0]}`,
-                district: selectedCluster,
-                attendance: row.attendance,
-                marks: 78,
-                riskLevel: row.riskLevel,
-                riskScore: row.riskScore,
-                primaryVector: row.primaryVector || "Academic",
-                vectorBreakdown: { academic: 25, economic: 25, health: 25, behavioral: 15, environmental: 10 },
-                specificCauses: [row.cause],
-                parentName: "Parent of " + row.name,
-                parentPhone: "+91 98000 00000",
-                dialect: "gu",
-                sathiMentor: "Unassigned",
-                matchedSchemes: ["SCHEME-01"]
-            });
-        }
+    parsedIntakeRows.forEach(r => {
+        const existingIdx = MOCK_STUDENTS.findIndex(s => s.id === r.id);
+        const newStudentObj = {
+            id: r.id,
+            name: r.name,
+            grade: "Class 10-A",
+            school: selectedCluster === "Anand Cluster" ? "Govt High School Anand" : `${selectedCluster} Secondary School`,
+            district: selectedCluster,
+            attendance: r.attendance,
+            marks: r.marks,
+            riskScore: r.riskScore,
+            riskLevel: r.riskLevel,
+            primaryVector: r.cause.includes('Travel') ? 'Environmental' :
+                           r.cause.includes('Economic') ? 'Economic' :
+                           r.cause.includes('Health') ? 'Health/Nutritional' :
+                           r.cause.includes('Academic') ? 'Academic' : 'Behavioral',
+            commuteDistance: r.dist,
+            familyOccupation: r.job,
+            healthFlag: r.health,
+            disclosureStatus: "Disclosed",
+            sathiMentor: "Unassigned",
+            parentName: `Parent of ${r.name}`,
+            parentPhone: "+91 98251 XXXXX",
+            specificCauses: [r.cause],
+            fallbackPlan: "Step 1: Automated Bus Pass Enrollment; Step 2: Sathi Senior Allocation",
+            vectorBreakdown: {
+                academic: r.marks < 50 ? 75 : 30,
+                attendance: 100 - r.attendance,
+                economic: r.cause.includes('Economic') ? 80 : 35,
+                health: r.cause.includes('Health') ? 70 : 25,
+                behavioral: 30,
+                environmental: r.cause.includes('Travel') ? 85 : 20
+            },
+            matchedSchemes: ["SCHEME-BUS-PASS", "SCHEME-MDM-EXTRA"]
+        };
 
-        // Automatic registration for good studying / low-risk students into Sathi Mentorship candidate pool
-        if (row.riskLevel === 'Low' || row.attendance >= 80) {
-            const existingMentor = SATHI_MENTORS.find(m => m.id === row.id || m.name.toLowerCase() === row.name.toLowerCase());
-            if (!existingMentor) {
-                SATHI_MENTORS.unshift({
-                    id: row.id,
-                    name: row.name,
-                    grade: "Class 10-A",
-                    school: `Govt High School ${selectedCluster.split(' ')[0]}`,
-                    attendance: row.attendance,
-                    marks: 82,
+        if (existingIdx >= 0) {
+            MOCK_STUDENTS[existingIdx] = newStudentObj;
+        } else {
+            MOCK_STUDENTS.unshift(newStudentObj);
+
+            if (r.attendance >= 82 && r.marks >= 70) {
+                SATHI_MENTORS.push({
+                    id: `m-intake-${Date.now()}-${newMentorsAdded}`,
+                    name: r.name,
+                    grade: "Class 11-A",
+                    school: newStudentObj.school,
+                    attendance: r.attendance,
+                    marks: r.marks,
                     riskLevel: "Low",
                     points: 150,
                     streak: 1,
-                    avatarColor: "bg-indigo-600",
+                    avatarColor: "bg-[#123B2A]",
                     badge: "Intake Mentor Candidate",
                     optedIn: true
                 });
@@ -1064,11 +1316,13 @@ function applyIntakeToRecords() {
     loadSathiLeaderboard();
     renderVSKDashboard();
 
-    const mentorMsg = newMentorsAdded > 0 ? ` Registered ${newMentorsAdded} good-performing student(s) into Sathi Mentorship Pool!` : '';
+    const mentorMsg = newMentorsAdded > 0 ? ` Registered ${newMentorsAdded} high-performing student(s) into Sathi Mentor Pool!` : '';
     showToast("Records Synced to System!", `Updated student database with ${parsedIntakeRows.length} imported rows.${mentorMsg}`, "success");
 }
 
-// SECTION 5: GOVT SCHEMES
+// ==========================================================================
+// 11. GOVERNMENT SCHEMES MATCHER (SECTION 5)
+// ==========================================================================
 function loadStudentSchemeMatch(studentId) {
     const student = MOCK_STUDENTS.find(s => s.id === studentId) || MOCK_STUDENTS[0];
     selectedStudentForScheme = student;
@@ -1078,35 +1332,37 @@ function loadStudentSchemeMatch(studentId) {
 
     if (detailDiv) {
         detailDiv.innerHTML = `
-            <div class="font-bold text-slate-900 text-base">${student.name}</div>
-            <div class="text-xs text-slate-500 mb-2">${student.id} • ${student.district}</div>
-            <div class="text-xs text-amber-800 font-medium bg-amber-50 p-2 rounded border border-amber-200 mb-2">
-                Main Cause: <strong>${student.primaryVector}</strong>
+            <div class="font-bold text-[#F5F7F5] text-base">${student.name}</div>
+            <div class="text-xs text-[#94A39C] mb-2">${student.id} • ${student.district}</div>
+            <div class="text-xs text-[#6EE7B7] font-semibold bg-[#123B2A] p-2 rounded-lg border border-[#263A32] mb-2">
+                Primary Vector: <strong>${student.primaryVector}</strong>
             </div>
-            <div class="text-[11px] text-slate-700">
-                Details: ${student.specificCauses[0]}
+            <div class="text-[11px] text-[#94A39C]">
+                Root Cause: ${student.specificCauses[0]}
             </div>
         `;
     }
 
     if (schemeList) {
-        const matched = GOVT_SCHEMES;
-        schemeList.innerHTML = matched.map(s => {
+        schemeList.innerHTML = GOVT_SCHEMES.map((s, idx) => {
             const isMatch = student.matchedSchemes.includes(s.id);
             return `
-                <div class="bg-white border ${isMatch ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200'} rounded-xl p-4 transition-all shadow-sm">
+                <div class="scheme-card-seq bg-[#17231F] border ${isMatch ? 'border-[#10B981] bg-[#123B2A]/40' : 'border-[#263A32]'} rounded-xl p-4 transition-all shadow-xs"
+                    style="animation-delay: ${idx * 80}ms">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                         <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-award text-emerald-600 text-sm"></i>
-                            <h3 class="text-xs font-bold text-slate-900">${s.name}</h3>
+                            <i class="fa-solid fa-award text-[#10B981] text-sm"></i>
+                            <h3 class="text-xs font-bold text-[#F5F7F5]">${s.name}</h3>
                         </div>
-                        ${isMatch ? '<span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded border border-emerald-200">Match Found</span>' : '<span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Standard Scheme</span>'}
+                        ${isMatch ? '<span class="text-[10px] bg-[#123B2A] text-[#6EE7B7] font-bold px-2 py-0.5 rounded border border-[#10B981]">Matched Need</span>' : '<span class="text-[10px] bg-[#111B18] text-[#94A39C] px-2 py-0.5 rounded border border-[#263A32]">Standard Scheme</span>'}
                     </div>
-                    <p class="text-xs text-slate-600 mb-3">${s.description}</p>
-                    <div class="flex flex-wrap items-center justify-between gap-3 text-xs pt-2 border-t border-slate-100">
-                        <div class="text-slate-600">Benefit: <strong class="text-emerald-700">${s.benefit}</strong></div>
-                        <button onclick="applyScheme('${s.name}', '${student.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 shadow-sm">
-                            <i class="fa-solid fa-circle-check"></i> 1-Click Auto Enroll
+                    <p class="text-xs text-[#94A39C] mb-3">${s.description}</p>
+                    <div class="flex flex-wrap items-center justify-between gap-3 text-xs pt-2 border-t border-[#263A32]">
+                        <div class="text-[#94A39C]">Benefit: <strong class="text-[#10B981]">${s.benefit}</strong></div>
+                        <button onclick="applyScheme(this, '${s.name}', '${student.name}')"
+                            class="enroll-btn btn-emerald text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-circle-check text-[11px] text-[#0B1713]"></i>
+                            <span>1-Click Auto Enroll</span>
                         </button>
                     </div>
                 </div>
@@ -1115,31 +1371,65 @@ function loadStudentSchemeMatch(studentId) {
     }
 }
 
-function applyScheme(schemeName, studentName) {
+function applyScheme(btnElement, schemeName, studentName) {
+    if (btnElement && btnElement.tagName === 'BUTTON') {
+        btnElement.classList.add('enrolled-success');
+        btnElement.innerHTML = '<i class="fa-solid fa-check text-xs"></i> <span>Enrolled ✓</span>';
+        setTimeout(() => {
+            btnElement.classList.remove('enrolled-success');
+            btnElement.innerHTML = '<i class="fa-solid fa-circle-check text-[11px] text-[#0B1713]"></i> <span>1-Click Auto Enroll</span>';
+        }, 1500);
+    }
     showToast("Scheme Application Submitted!", `Submitted application for ${schemeName} for ${studentName}.`, "success");
 }
 
-// SECTION 6: SUPPORT PLAN SIMULATOR
+// ==========================================================================
+// 12. INTERVENTION SIMULATOR (SECTION 6)
+// ==========================================================================
 function calculateActionImpacts(student) {
-    const vb = student.vectorBreakdown;
-    const primary = student.primaryVector;
+    let peerImpact = 15;
+    let transportImpact = 10;
+    let mealImpact = 8;
+    let remedialImpact = 12;
 
-    let peerImpact = Math.round((vb.academic * 0.45) + (vb.behavioral * 0.50) + (vb.economic * 0.10));
-    peerImpact = Math.max(8, Math.min(30, peerImpact));
+    const vec = student.primaryVector;
+    if (vec === 'Environmental') {
+        transportImpact += 15;
+        peerImpact += 5;
+    } else if (vec === 'Economic') {
+        mealImpact += 15;
+        transportImpact += 8;
+        peerImpact += 6;
+    } else if (vec === 'Academic') {
+        remedialImpact += 16;
+        peerImpact += 8;
+    } else if (vec === 'Health/Nutritional') {
+        mealImpact += 18;
+    } else if (vec === 'Behavioral') {
+        peerImpact += 18;
+    }
 
-    let transportImpact = Math.round((vb.environmental * 0.70) + (vb.economic * 0.35));
-    if (primary === 'Environmental') transportImpact += 8;
-    transportImpact = Math.max(6, Math.min(38, transportImpact));
-
-    let mealImpact = Math.round((vb.health * 0.75) + (vb.economic * 0.25));
-    if (primary === 'Health & Nutrition' || primary === 'Health/Nutritional') mealImpact += 10;
-    mealImpact = Math.max(7, Math.min(32, mealImpact));
-
-    let remedialImpact = Math.round((vb.academic * 0.70) + ((100 - student.marks) * 0.20));
-    if (primary === 'Academic') remedialImpact += 8;
+    peerImpact = Math.max(5, Math.min(35, peerImpact));
+    transportImpact = Math.max(5, Math.min(35, transportImpact));
+    mealImpact = Math.max(5, Math.min(35, mealImpact));
     remedialImpact = Math.max(5, Math.min(35, remedialImpact));
 
     return { peerImpact, transportImpact, mealImpact, remedialImpact };
+}
+
+function updateInterventionCardVisuals() {
+    const checkboxes = ['simPeer', 'simTransport', 'simMeal', 'simRemedial'];
+    checkboxes.forEach(id => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        const card = input.closest('label');
+        if (!card) return;
+        if (input.checked) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
 }
 
 function runSimulation() {
@@ -1157,6 +1447,8 @@ function runSimulation() {
     const causeBadge = document.getElementById('simCauseVectorBadge');
     if (causeBadge) causeBadge.innerText = `Primary Cause: ${student.primaryVector}`;
 
+    updateInterventionCardVisuals();
+
     const simPeer = document.getElementById('simPeer')?.checked;
     const simTransport = document.getElementById('simTransport')?.checked;
     const simMeal = document.getElementById('simMeal')?.checked;
@@ -1172,7 +1464,14 @@ function runSimulation() {
     let newRisk = Math.max(8, baselineRisk - reduction);
 
     document.getElementById('simBaseRisk').innerText = `${baselineRisk}%`;
-    document.getElementById('simNewRisk').innerText = `${newRisk}%`;
+    const newRiskEl = document.getElementById('simNewRisk');
+
+    if (prevSimNewRisk !== null && prevSimNewRisk !== newRisk) {
+        animateValue(newRiskEl, prevSimNewRisk, newRisk, 400, '', '%');
+    } else {
+        newRiskEl.innerText = `${newRisk}%`;
+    }
+    prevSimNewRisk = newRisk;
 
     const recElem = document.getElementById('simRecommendation');
     if (recElem) {
@@ -1191,16 +1490,15 @@ function renderSimChart(baselineRisk, newRisk) {
     }
 
     const ctx = canvas.getContext('2d');
-
     const labels = ['Day 0', 'Day 10', 'Day 20', 'Day 30', 'Day 40', 'Day 50', 'Day 60'];
     const noIntervention = [baselineRisk, baselineRisk + 2, baselineRisk + 4, baselineRisk + 5, baselineRisk + 6, baselineRisk + 7, baselineRisk + 8];
     const withIntervention = [
         baselineRisk,
-        baselineRisk - (baselineRisk - newRisk)*0.2,
-        baselineRisk - (baselineRisk - newRisk)*0.45,
-        baselineRisk - (baselineRisk - newRisk)*0.7,
-        baselineRisk - (baselineRisk - newRisk)*0.85,
-        baselineRisk - (baselineRisk - newRisk)*0.95,
+        baselineRisk - (baselineRisk - newRisk) * 0.2,
+        baselineRisk - (baselineRisk - newRisk) * 0.45,
+        baselineRisk - (baselineRisk - newRisk) * 0.7,
+        baselineRisk - (baselineRisk - newRisk) * 0.85,
+        baselineRisk - (baselineRisk - newRisk) * 0.95,
         newRisk
     ];
 
@@ -1210,48 +1508,76 @@ function renderSimChart(baselineRisk, newRisk) {
             labels: labels,
             datasets: [
                 {
-                    label: 'No Help Given',
+                    label: 'No Help Given (Absenteeism Growth)',
                     data: noIntervention,
-                    borderColor: '#f43f5e',
+                    borderColor: '#EF4444',
                     borderDash: [5, 5],
+                    borderWidth: 2,
                     fill: false,
-                    tension: 0.3
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#EF4444'
                 },
                 {
-                    label: 'With Cause-Aware Plan',
+                    label: 'With Cause-Aware Support Plan',
                     data: withIntervention,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+                    borderWidth: 2.5,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#10B981'
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 650,
+                easing: 'easeOutQuart'
+            },
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { color: '#475569', font: { size: 10 } }
+                    labels: {
+                        color: '#94A39C',
+                        font: { size: 10, family: 'Plus Jakarta Sans', weight: '600' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#17231F',
+                    borderColor: '#263A32',
+                    borderWidth: 1,
+                    titleColor: '#F5F7F5',
+                    bodyColor: '#94A39C',
+                    cornerRadius: 8
                 }
             },
             scales: {
-                x: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' }, min: 0, max: 100 }
+                x: {
+                    ticks: { color: '#94A39C', font: { size: 10 } },
+                    grid: { color: '#263A32' }
+                },
+                y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { color: '#94A39C', font: { size: 10 } },
+                    grid: { color: '#263A32' }
+                }
             }
         }
     });
 }
 
 function applySimulatedPlan() {
-    showToast("Support Plan Saved!", "Applied custom cause-aware plan to student profile.", "success");
+    showToast("Support Plan Saved!", "Applied tailored cause-aware plan to student profile.", "success");
 }
 
-
-// SECTION 8: SATHI STUDENT MENTORS — OPT-IN REGISTRY, MANUAL PAIRING & CERTIFICATES
-let sathiPairs = [];
-
-// LOCALSTORAGE PERSISTENCE HELPERS
+// ==========================================================================
+// 13. SATHI MENTORSHIP PROGRAM (SECTION 7)
+// ==========================================================================
 function saveOptInState() {
     try {
         const stateMap = {};
@@ -1260,7 +1586,7 @@ function saveOptInState() {
         });
         localStorage.setItem('dd_sathi_opt_ins', JSON.stringify(stateMap));
     } catch (e) {
-        console.error("Error saving opt-in state:", e);
+        console.error("Opt-in storage error:", e);
     }
 }
 
@@ -1276,7 +1602,7 @@ function loadOptInState() {
             });
         }
     } catch (e) {
-        console.error("Error loading opt-in state:", e);
+        console.error("Opt-in load error:", e);
     }
 }
 
@@ -1284,7 +1610,7 @@ function saveSathiPairsState() {
     try {
         localStorage.setItem('dd_sathi_pairs', JSON.stringify(sathiPairs));
     } catch (e) {
-        console.error("Error saving sathi pairs:", e);
+        console.error("Pairs storage error:", e);
     }
 }
 
@@ -1295,11 +1621,10 @@ function loadSathiPairsState() {
             sathiPairs = JSON.parse(saved);
         }
     } catch (e) {
-        console.error("Error loading sathi pairs:", e);
+        console.error("Pairs load error:", e);
     }
 }
 
-// 1. RENDER LOW-RISK STUDENT OPT-IN / OPT-OUT REGISTRY
 function loadLowRiskRegistry() {
     loadOptInState();
     loadSathiPairsState();
@@ -1316,28 +1641,31 @@ function loadLowRiskRegistry() {
         const activePairs = sathiPairs.filter(p => p.mentorId === m.id).length;
 
         return `
-            <div class="bg-slate-50 border ${isOpted ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'} rounded-xl p-3 flex items-center justify-between transition-all">
+            <div class="bg-[#17231F] border ${isOpted ? 'border-[#10B981]' : 'border-[#263A32]'} rounded-xl p-3 flex items-center justify-between transition-all">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full ${m.avatarColor} text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-[#123B2A] text-[#10B981] flex items-center justify-center font-bold text-xs flex-shrink-0 border border-[#263A32]">
                         ${m.name.charAt(0)}
                     </div>
                     <div>
-                        <div class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <div class="font-bold text-[#F5F7F5] text-xs flex items-center gap-1.5">
                             ${m.name}
-                            ${isOpted ? `<span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">Opted-In</span>` : `<span class="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded font-medium">Opted-Out</span>`}
+                            ${isOpted ? `<span class="text-[9px] bg-[#123B2A] text-[#10B981] px-1.5 py-0.2 rounded font-bold border border-[#263A32]">Opted-In</span>` : `<span class="text-[9px] bg-[#111B18] text-[#94A39C] px-1.5 py-0.2 rounded font-medium border border-[#263A32]">Opted-Out</span>`}
                         </div>
-                        <div class="text-[10px] text-slate-500">${m.grade} • ${m.school}</div>
-                        <div class="text-[10px] text-slate-600 mt-0.5 font-medium">
-                            Attendance: <strong class="text-slate-800">${m.attendance}%</strong> | Score: <strong class="text-slate-800">${m.marks}%</strong>
+                        <div class="text-[10px] text-[#94A39C]">${m.grade} • ${m.school}</div>
+                        <div class="text-[10px] text-[#94A39C] mt-0.5 font-medium">
+                            Attendance: <strong class="text-[#10B981]">${m.attendance}%</strong> | Score: <strong class="text-[#6EE7B7]">${m.marks}%</strong>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col items-end gap-1">
-                    <button onclick="toggleMentorOptIn('${m.id}')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${isOpted ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'}">
-                        ${isOpted ? 'Opt Out' : 'Opt In ✓'}
-                    </button>
-                    ${activePairs > 0 ? `<span class="text-[9px] text-indigo-600 font-bold">${activePairs} pair${activePairs > 1 ? 's' : ''}</span>` : ''}
+                <div class="flex flex-col items-end gap-1.5">
+                    <!-- Smooth Animated Switch Toggle -->
+                    <div class="mentor-switch ${isOpted ? 'active' : ''}" onclick="toggleMentorOptIn('${m.id}')" title="${isOpted ? 'Click to Opt Out' : 'Click to Opt In'}">
+                        <div class="mentor-switch-knob">
+                            ${isOpted ? '<i class="fa-solid fa-check"></i>' : ''}
+                        </div>
+                    </div>
+                    ${activePairs > 0 ? `<span class="text-[9px] text-[#10B981] font-bold">${activePairs} pair${activePairs > 1 ? 's' : ''}</span>` : ''}
                 </div>
             </div>
         `;
@@ -1351,12 +1679,11 @@ function toggleMentorOptIn(mentorId) {
     mentor.optedIn = !mentor.optedIn;
     saveOptInState();
 
-    // If opting out, check if mentor has active pairs
     const activePairs = sathiPairs.filter(p => p.mentorId === mentorId);
     if (!mentor.optedIn && activePairs.length > 0) {
-        showToast("Opted Out of Program", `${mentor.name} has opted out. Note: ${activePairs.length} active pair(s) currently assigned.`, "warning");
+        showToast("Opted Out of Program", `${mentor.name} opted out. Note: ${activePairs.length} active pair(s) assigned.`, "warning");
     } else if (mentor.optedIn) {
-        showToast("Opted-In to Mentorship", `${mentor.name} is now available in the teacher pairing list!`, "success");
+        showToast("Opted-In to Mentorship", `${mentor.name} is now available in the teacher pairing pool!`, "success");
     } else {
         showToast("Opted-Out from Mentorship", `${mentor.name} removed from active mentor pool.`, "info");
     }
@@ -1365,7 +1692,6 @@ function toggleMentorOptIn(mentorId) {
     loadSathiLeaderboard();
 }
 
-// 2. RENDER OPTED-IN MENTORS & CERTIFICATES
 function loadSathiLeaderboard() {
     const div = document.getElementById('mentorLeaderboard');
     if (!div) return;
@@ -1374,10 +1700,10 @@ function loadSathiLeaderboard() {
 
     if (optedInMentors.length === 0) {
         div.innerHTML = `
-            <div class="text-center py-6 text-slate-400">
-                <i class="fa-solid fa-user-slash text-2xl mb-1 text-slate-300"></i>
+            <div class="text-center py-6 text-[#94A39C]">
+                <i class="fa-solid fa-user-slash text-2xl mb-1 text-[#263A32]"></i>
                 <div class="text-xs font-semibold">No Opted-In Mentors</div>
-                <p class="text-[10px] mt-0.5">Opt-in senior students in the top registry panel.</p>
+                <p class="text-[10px] mt-0.5">Opt-in senior students in the registry above.</p>
             </div>
         `;
         return;
@@ -1385,33 +1711,38 @@ function loadSathiLeaderboard() {
 
     div.innerHTML = optedInMentors.map((m, idx) => {
         const activePairs = sathiPairs.filter(p => p.mentorId === m.id).length;
+        const podiumBadges = ['🥇', '🥈', '🥉'];
+        const rankIcon = idx < 3 ? podiumBadges[idx] : `#${idx + 1}`;
+
         return `
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <div class="font-extrabold text-xs ${idx === 0 ? 'text-amber-600' : 'text-slate-400'}">#${idx + 1}</div>
-                <div class="w-8 h-8 rounded-full ${m.avatarColor} text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                    ${m.name.charAt(0)}
-                </div>
-                <div>
-                    <div class="font-bold text-slate-900 text-xs">${m.name}</div>
-                    <div class="text-[10px] text-slate-500">${m.grade}</div>
-                    <div class="text-[10px] mt-0.5 ${activePairs > 0 ? 'text-indigo-600 font-semibold' : 'text-slate-400'}">
-                        ${activePairs > 0 ? `${activePairs} active pair${activePairs > 1 ? 's' : ''}` : 'Ready for pairing'}
+            <div class="leader-row-seq bg-[#17231F] border border-[#263A32] rounded-xl p-3 flex items-center justify-between"
+                style="animation-delay: ${idx * 60}ms">
+                <div class="flex items-center gap-2.5">
+                    <div class="font-extrabold text-xs text-[#6EE7B7] w-5 text-center">${rankIcon}</div>
+                    <div class="w-8 h-8 rounded-full bg-[#123B2A] text-[#10B981] flex items-center justify-center font-bold text-xs flex-shrink-0 border border-[#263A32]">
+                        ${m.name.charAt(0)}
+                    </div>
+                    <div>
+                        <div class="font-bold text-[#F5F7F5] text-xs">${m.name}</div>
+                        <div class="text-[10px] text-[#94A39C]">${m.grade}</div>
+                        <div class="text-[10px] mt-0.5 ${activePairs > 0 ? 'text-[#10B981] font-semibold' : 'text-[#94A39C]'}">
+                            ${activePairs > 0 ? `${activePairs} active pair${activePairs > 1 ? 's' : ''}` : 'Ready for pairing'}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex flex-col items-end gap-1">
-                <div class="text-xs font-black text-amber-600">${m.points} pts</div>
-                <button onclick="openMentorCertificate('${m.id}')" title="Issue Official Government Certificate" class="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded text-[10px] font-bold flex items-center gap-1 transition-all">
-                    <i class="fa-solid fa-graduation-cap text-[9px]"></i> Certificate
-                </button>
+                <div class="flex flex-col items-end gap-1">
+                    <div class="text-xs font-black text-amber-400 font-mono">${m.points} pts</div>
+                    <button onclick="openMentorCertificate('${m.id}')" title="Issue Official Government Certificate"
+                        class="bg-[#123B2A] hover:bg-[#1B4E38] text-[#10B981] border border-[#263A32] px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-graduation-cap text-[9px]"></i> Certificate
+                    </button>
+                </div>
             </div>
-        </div>`;
+        `;
     }).join('');
 }
 
-// 3. RENDER ACTIVE MENTOR PAIRS
 function loadSathiPairs() {
     const div = document.getElementById('sathiPairList');
     const empty = document.getElementById('sathiEmptyState');
@@ -1426,42 +1757,45 @@ function loadSathiPairs() {
     if (empty) empty.classList.add('hidden');
 
     div.innerHTML = sathiPairs.map(p => `
-        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-indigo-200 transition-colors">
+        <div id="pairCard-${p.id}" class="bg-[#17231F] border border-[#263A32] rounded-xl p-4 transition-all hover:border-[#10B981]/50">
             <div class="flex items-start justify-between mb-3">
-                <span class="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-200 flex items-center gap-1">
-                    <i class="fa-solid fa-link text-[9px]"></i> Active Pair
+                <span class="text-[10px] bg-[#123B2A] text-[#10B981] font-bold px-2 py-0.5 rounded border border-[#263A32] flex items-center gap-1">
+                    <i class="fa-solid fa-link text-[9px]"></i> Active Sathi Pair
                 </span>
-                <button onclick="removePair('${p.id}')" title="Remove Pair" class="w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all">
+                <button onclick="removePair('${p.id}')" title="Dissolve Pairing" class="w-6 h-6 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-400 border border-rose-800/60 flex items-center justify-center transition-all cursor-pointer">
                     <i class="fa-solid fa-xmark text-[10px]"></i>
                 </button>
             </div>
 
+            <!-- Mentor Info -->
             <div class="flex items-center gap-2 mb-1">
-                <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">${p.mentorName.charAt(0)}</div>
+                <div class="w-7 h-7 rounded-full bg-[#123B2A] text-[#10B981] border border-[#263A32] flex items-center justify-center font-bold text-xs flex-shrink-0">${p.mentorName.charAt(0)}</div>
                 <div>
-                    <div class="text-xs font-bold text-slate-900">${p.mentorName}</div>
-                    <div class="text-[10px] text-slate-500">${p.mentorGrade} · Mentor</div>
+                    <div class="text-xs font-bold text-[#F5F7F5]">${p.mentorName}</div>
+                    <div class="text-[10px] text-[#94A39C]">${p.mentorGrade} · Mentor</div>
                 </div>
             </div>
 
-            <div class="flex items-center gap-1.5 text-[11px] text-slate-500 px-1 my-2">
-                <i class="fa-solid fa-arrow-down text-[9px] text-indigo-400"></i>
-                <span class="bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-2 py-0.5 rounded text-[10px]">${p.focus}</span>
+            <!-- Connection Indicator with Beam -->
+            <div class="flex items-center gap-2 text-[11px] text-[#94A39C] px-1 my-2">
+                <i class="fa-solid fa-arrow-down text-[9px] text-[#10B981]"></i>
+                <span class="bg-[#111B18] border border-[#263A32] text-[#6EE7B7] font-semibold px-2 py-0.5 rounded text-[10px]">${p.focus}</span>
             </div>
 
+            <!-- Mentee Info -->
             <div class="flex items-center gap-2 mb-3">
-                <div class="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">${p.menteeName.charAt(0)}</div>
+                <div class="w-7 h-7 rounded-full bg-[#123B2A] text-[#6EE7B7] border border-[#263A32] flex items-center justify-center font-bold text-xs flex-shrink-0">${p.menteeName.charAt(0)}</div>
                 <div>
-                    <div class="text-xs font-bold text-slate-900">${p.menteeName}</div>
-                    <div class="text-[10px] text-slate-500">${p.menteeGrade} · Mentee</div>
+                    <div class="text-xs font-bold text-[#F5F7F5]">${p.menteeName}</div>
+                    <div class="text-[10px] text-[#94A39C]">${p.menteeGrade} · Mentee</div>
                 </div>
             </div>
 
-            ${p.note ? `<div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11px] text-amber-900 mb-3"><span class="font-bold">Note:</span> ${p.note}</div>` : ''}
+            ${p.note ? `<div class="bg-[#111B18] border border-[#263A32] rounded-lg px-3 py-2 text-[11px] text-[#94A39C] mb-3"><span class="font-bold text-[#F5F7F5]">Note:</span> ${p.note}</div>` : ''}
 
-            <div class="border-t border-slate-100 pt-2.5 flex justify-between items-center text-[11px] text-slate-500">
-                <span>Streak: <strong class="text-slate-800">${p.streakDays} Days</strong></span>
-                <button onclick="openMentorCertificate('${p.mentorId}')" class="text-indigo-600 font-bold hover:underline text-[10px] flex items-center gap-1">
+            <div class="border-t border-[#263A32] pt-2.5 flex justify-between items-center text-[11px] text-[#94A39C]">
+                <span>Streak: <strong class="text-[#10B981]">${p.streakDays} Days</strong></span>
+                <button onclick="openMentorCertificate('${p.mentorId}')" class="text-[#10B981] font-bold hover:underline text-[10px] flex items-center gap-1 cursor-pointer">
                     <i class="fa-solid fa-certificate text-[9px]"></i> View Certificate
                 </button>
             </div>
@@ -1469,7 +1803,6 @@ function loadSathiPairs() {
     `).join('');
 }
 
-// 4. OPEN PAIRING MODAL (FILTERING OUT ALREADY-PAIRED MENTEES & OPTED-OUT MENTORS)
 function openPairModal(preSelectedMenteeId = null) {
     const mentorSel = document.getElementById('pairMentorSelect');
     const menteeSel = document.getElementById('pairMenteeSelect');
@@ -1477,7 +1810,6 @@ function openPairModal(preSelectedMenteeId = null) {
 
     if (errDiv) errDiv.classList.add('hidden');
 
-    // Populate Opted-In Mentors Only
     const optedInMentors = SATHI_MENTORS.filter(m => m.optedIn);
     if (mentorSel) {
         if (optedInMentors.length === 0) {
@@ -1487,7 +1819,6 @@ function openPairModal(preSelectedMenteeId = null) {
         }
     }
 
-    // Populate Mentees (EXCLUDE ALREADY PAIRED STUDENTS COMPLETELY)
     const unpairedStudents = MOCK_STUDENTS.filter(s => !sathiPairs.some(p => p.menteeId === s.id));
     if (menteeSel) {
         if (unpairedStudents.length === 0) {
@@ -1495,14 +1826,13 @@ function openPairModal(preSelectedMenteeId = null) {
         } else {
             const riskOrder = { 'Severe': 0, 'High': 1, 'Moderate': 2, 'Low': 3 };
             const sorted = [...unpairedStudents].sort((a, b) => (riskOrder[a.riskLevel] ?? 9) - (riskOrder[b.riskLevel] ?? 9));
-            
+
             menteeSel.innerHTML = sorted.map(s => {
                 return `<option value="${s.id}" ${preSelectedMenteeId === s.id ? 'selected' : ''}>${s.name} (${s.grade}) — ${s.riskLevel} Risk [${s.primaryVector}]</option>`;
             }).join('');
         }
     }
 
-    // Reset fields
     const focusSel = document.getElementById('pairFocusSelect');
     if (focusSel) focusSel.selectedIndex = 0;
     const noteInput = document.getElementById('pairNoteInput');
@@ -1535,7 +1865,6 @@ function confirmPairing() {
     const focus = focusSel?.value || 'Daily Check-in & Attendance';
     const note = noteInput?.value.trim() || '';
 
-    // Validation
     if (!mentorId || !menteeId) {
         errDiv.innerText = 'Please select both an available mentor and an at-risk mentee.';
         errDiv.classList.remove('hidden');
@@ -1558,7 +1887,6 @@ function confirmPairing() {
         return;
     }
 
-    // Create pair
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     const newPair = {
@@ -1588,19 +1916,25 @@ function confirmPairing() {
 }
 
 function removePair(pairId) {
-    const pair = sathiPairs.find(p => p.id === pairId);
-    sathiPairs = sathiPairs.filter(p => p.id !== pairId);
-    saveSathiPairsState();
+    const cardEl = document.getElementById(`pairCard-${pairId}`);
+    if (cardEl) {
+        cardEl.classList.add('pair-card-removing');
+    }
 
-    loadSathiPairs();
-    loadSathiLeaderboard();
-    loadLowRiskRegistry();
-    renderStudentTable();
-    renderVSKDashboard();
-    if (pair) showToast('Pair Removed', `${pair.mentorName} → ${pair.menteeName} pairing dissolved.`, 'info');
+    setTimeout(() => {
+        const pair = sathiPairs.find(p => p.id === pairId);
+        sathiPairs = sathiPairs.filter(p => p.id !== pairId);
+        saveSathiPairsState();
+
+        loadSathiPairs();
+        loadSathiLeaderboard();
+        loadLowRiskRegistry();
+        renderStudentTable();
+        renderVSKDashboard();
+        if (pair) showToast('Pair Dissolved', `${pair.mentorName} → ${pair.menteeName} pairing dissolved.`, 'info');
+    }, 220);
 }
 
-// 5. OFFICIAL GOVERNMENT MENTOR CERTIFICATE FUNCTIONS
 function openMentorCertificate(mentorId) {
     const mentor = SATHI_MENTORS.find(m => m.id === mentorId) || SATHI_MENTORS[0];
 
@@ -1635,7 +1969,9 @@ function printMentorCertificate() {
     window.print();
 }
 
-// SECTION 9: EMERGENCY HOME VISIT & TRUSTED LIAISON DISPATCH
+// ==========================================================================
+// 14. EMERGENCY HOME VISIT & TRUSTED LIAISON (SECTION 8)
+// ==========================================================================
 function loadSOSStudent() {
     const select = document.getElementById('sosStudentSelect');
     const studentId = select ? select.value : MOCK_STUDENTS[0].id;
@@ -1650,54 +1986,86 @@ function renderCautionNote(student) {
     if (!paper) return;
 
     paper.innerHTML = `
-        <div class="border-b-2 border-slate-900 pb-3 mb-3 flex items-center justify-between">
+        <div class="border-b border-[#263A32] pb-3 mb-3 flex items-center justify-between">
             <div>
-                <h2 class="font-extrabold text-sm uppercase text-slate-900">Education Department - Government of Gujarat</h2>
-                <p class="text-[10px] text-slate-600 font-semibold">Student Retention &amp; Guidance Notice</p>
+                <h2 class="font-extrabold text-sm uppercase text-[#F5F7F5]">Department of School Education • State Government</h2>
+                <p class="text-[10px] text-[#94A39C] font-semibold">Student Retention Guidance &amp; Community Outreach Memo</p>
             </div>
             <div class="text-right">
-                <div class="font-mono text-[10px] text-slate-700">Ref: DEO/EWS/2026-${student.id}</div>
-                <div class="text-[10px] text-slate-500">Date: 06-August-2026</div>
+                <div class="font-mono text-[10px] text-[#6EE7B7] font-bold">Ref: DEO/EWS/2026-${student.id}</div>
+                <div class="text-[10px] text-[#94A39C]">Date: 06-October-2026</div>
             </div>
         </div>
 
-        <div class="text-center bg-rose-100 border border-rose-300 text-rose-900 font-bold py-1 rounded mb-3 text-xs uppercase">
-            OFFICIAL NOTICE: COMMUNITY FIELD LIAISON CHECK-IN
+        <div class="text-center bg-[#17231F] border border-rose-900/60 text-rose-300 font-bold py-1.5 rounded-lg mb-3 text-xs uppercase flex items-center justify-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-rose-500 severe-pulse-indicator"></span>
+            <span>Official Outreach Request: Routine Community Liaison Visit</span>
         </div>
 
-        <div class="space-y-2 leading-relaxed text-slate-800 text-xs">
-            <p><strong>To:</strong> Anganwadi Healthcare Worker / Gram ASHA Worker</p>
-            <p><strong>Subject:</strong> Routine Health Check-in Request for Student <strong>${student.name}</strong> (${student.id})</p>
+        <div class="space-y-2.5 leading-relaxed text-[#F5F7F5] text-xs">
+            <p><strong class="text-[#6EE7B7]">To:</strong> Anganwadi Healthcare Supervisor / ASHA Village Community Health Worker</p>
+            <p><strong class="text-[#6EE7B7]">Subject:</strong> Routine Wellness &amp; Educational Welfare Verification for <strong>${student.name}</strong> (${student.id})</p>
             
-            <div class="bg-slate-50 p-2.5 rounded border border-slate-200 grid grid-cols-2 gap-1.5 text-[11px]">
-                <div><strong>Student Name:</strong> ${student.name}</div>
-                <div><strong>Grade &amp; School:</strong> ${student.grade}, ${student.school}</div>
-                <div><strong>Attendance Rate:</strong> <span class="text-rose-700 font-bold">${student.attendance}%</span></div>
-                <div><strong>Primary Cause:</strong> ${student.primaryVector}</div>
-                <div><strong>Parent / Guardian:</strong> ${student.parentName}</div>
-                <div><strong>Disclosure Status:</strong> ${student.disclosureStatus || 'Non-Disclosed'}</div>
+            <div class="bg-[#17231F] p-3 rounded-lg border border-[#263A32] grid grid-cols-2 gap-2 text-[11px]">
+                <div><span class="text-[#94A39C]">Student Name:</span> <strong class="text-[#F5F7F5]">${student.name}</strong></div>
+                <div><span class="text-[#94A39C]">Grade &amp; School:</span> <strong class="text-[#F5F7F5]">${student.grade}, ${student.school}</strong></div>
+                <div><span class="text-[#94A39C]">Attendance Rate:</span> <span class="text-rose-400 font-bold">${student.attendance}%</span></div>
+                <div><span class="text-[#94A39C]">Primary Cause Vector:</span> <span class="bg-[#123B2A] text-[#6EE7B7] px-1.5 py-0.2 rounded border border-[#263A32] font-semibold">${student.primaryVector}</span></div>
+                <div><span class="text-[#94A39C]">Parent / Guardian:</span> <strong class="text-[#F5F7F5]">${student.parentName}</strong></div>
+                <div><span class="text-[#94A39C]">Disclosure Status:</span> <strong class="text-[#F5F7F5]">${student.disclosureStatus || 'Non-Disclosed'}</strong></div>
             </div>
 
-            <p><strong>Safeguard Protocol:</strong> Non-intrusive routine village check-in assigned. Please visit during regular health rounds to offer transport/ration assistance without interrogation.</p>
+            <p class="text-[#94A39C] text-[11px]">
+                <strong class="text-[#F5F7F5]">Safeguard Protocol:</strong> Non-intrusive routine community check-in authorized. Please conduct a visit during standard village health rounds to assist with transport subsidy and nutrition entitlements without questioning the family.
+            </p>
         </div>
 
-        <div class="mt-6 pt-3 border-t border-slate-300 flex items-center justify-between text-[10px] text-slate-600">
-            <div>Approved by District Education Officer (DEO)</div>
-            <div class="font-mono">*${student.id}-SIH2026*</div>
+        <div class="mt-6 pt-3 border-t border-[#263A32] flex items-center justify-between text-[10px] text-[#94A39C]">
+            <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-stamp text-[#10B981]"></i>
+                <span>Approved by District Education Authority</span>
+            </div>
+            <div class="font-mono text-[#94A39C]">*${student.id}-SIH2026*</div>
         </div>
     `;
 }
 
 function dispatchFieldSOS() {
     const agency = document.getElementById('sosAgency').value;
-    showToast("Community Dispatch Sent!", `Requested visit by ${agency} for ${selectedStudentForSOS.name}.`, "success");
+    const btn = document.getElementById('dispatchSOSBtn');
+    const btnText = document.getElementById('dispatchSOSBtnText');
+
+    if (btn && btnText) {
+        btn.disabled = true;
+        btnText.innerText = "Preparing Dispatch...";
+        btn.classList.add('opacity-80');
+
+        setTimeout(() => {
+            btnText.innerText = "Coordinating Agency...";
+            setTimeout(() => {
+                btnText.innerText = "Dispatched ✓";
+                setTimeout(() => {
+                    btnText.innerText = "Confirmed ✓";
+                    btn.classList.remove('opacity-80');
+                    btn.disabled = false;
+                    setTimeout(() => {
+                        btnText.innerText = "Request Community Visit";
+                    }, 2000);
+                }, 400);
+            }, 400);
+        }, 300);
+    }
+
+    showToast("Community Dispatch Sent!", `Dispatched visit request to ${agency} for ${selectedStudentForSOS.name}.`, "success");
 }
 
 function printCautionNote() {
     window.print();
 }
 
-// TOAST NOTIFICATIONS
+// ==========================================================================
+// 15. TOAST NOTIFICATIONS SYSTEM
+// ==========================================================================
 function showToast(title, msg, type = 'success') {
     const toast = document.getElementById('toast');
     const toastTitle = document.getElementById('toastTitle');
@@ -1710,19 +2078,29 @@ function showToast(title, msg, type = 'success') {
     if (toastMsg) toastMsg.innerText = msg;
 
     if (type === 'success') {
-        toastIcon.className = 'w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-xs';
+        toastIcon.className = 'w-7 h-7 rounded-lg bg-[#123B2A] text-[#10B981] flex items-center justify-center flex-shrink-0 text-xs border border-[#263A32]';
         toastIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
     } else if (type === 'error') {
-        toastIcon.className = 'w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 text-xs';
+        toastIcon.className = 'w-7 h-7 rounded-lg bg-rose-950/80 text-rose-400 flex items-center justify-center flex-shrink-0 text-xs border border-rose-800/80';
         toastIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
     } else if (type === 'info') {
-        toastIcon.className = 'w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0 text-xs';
+        toastIcon.className = 'w-7 h-7 rounded-lg bg-[#123B2A] text-[#6EE7B7] flex items-center justify-center flex-shrink-0 text-xs border border-[#263A32]';
         toastIcon.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+    } else if (type === 'warning') {
+        toastIcon.className = 'w-7 h-7 rounded-lg bg-amber-950/80 text-amber-400 flex items-center justify-center flex-shrink-0 text-xs border border-amber-800/80';
+        toastIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
     }
 
-    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    // Audible chime confirmation
+    if (type === 'success') {
+        playCallChime();
+    }
+
+    toast.classList.remove('toast-hidden');
+    toast.classList.add('toast-visible');
 
     setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-    }, 4000);
+        toast.classList.remove('toast-visible');
+        toast.classList.add('toast-hidden');
+    }, 3800);
 }

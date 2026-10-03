@@ -1,4 +1,59 @@
-/* DropOut Defenders 3.0 Light & Pastel Theme Styles */
+/* ==========================================================================
+   SCHOLAR NOTIFY — FOREST GREEN × DARK SLATE × LIME DESIGN SYSTEM
+   Palette:
+     - Deep Forest:   #0B1713 (Main page background)
+     - Forest Green:  #123B2A (Primary surface / navigation / major sections)
+     - Emerald:       #10B981 (Primary interaction color)
+     - Lime Mint:     #6EE7B7 (Secondary highlight)
+     - Soft Mint:     #D1FAE5 (Light accent backgrounds)
+     - Warm White:    #F5F7F5 (Primary light text)
+     - Muted Slate:   #94A39C (Secondary text)
+     - Dark Slate:    #17231F (Card / panel background)
+     - Border Green:  #263A32 (Subtle borders)
+
+   Semantic Risk Colors:
+     - Severe:   #EF4444
+     - High:     #F59E0B
+     - Moderate: #3B82F6
+     - Low:      #10B981
+     - Safe:     #22C55E
+   ========================================================================== */
+
+:root {
+    --color-deep-forest: #0B1713;
+    --color-forest: #123B2A;
+    --color-forest-dark: #0D261B;
+    --color-forest-light: #1B4E38;
+    --color-emerald: #10B981;
+    --color-emerald-hover: #059669;
+    --color-lime-mint: #6EE7B7;
+    --color-soft-mint: #D1FAE5;
+    --color-warm-white: #F5F7F5;
+    --color-muted-slate: #94A39C;
+    --color-dark-slate: #17231F;
+    --color-dark-slate-hover: #1E2E28;
+    --color-border-green: #263A32;
+
+    /* Semantic Risk */
+    --risk-severe: #EF4444;
+    --risk-high: #F59E0B;
+    --risk-moderate: #3B82F6;
+    --risk-low: #10B981;
+    --risk-safe: #22C55E;
+}
+
+/* Base resets & typography */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--color-deep-forest);
+    color: var(--color-warm-white);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -6,17 +61,18 @@
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #0B1713;
 }
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #263A32;
     border-radius: 4px;
+    transition: background 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #10B981;
 }
 
-/* Hide scrollbar for nav horizontal overflow */
+/* Hide scrollbar utility */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -25,33 +81,140 @@
     scrollbar-width: none;
 }
 
-/* Nav Tab Active States (Light Mode) */
-.nav-tab {
-    color: #64748b;
-    background-color: transparent;
-    border: 1px solid transparent;
-    white-space: nowrap;
-}
-.nav-tab:hover {
-    color: #1e293b;
-    background-color: #f1f5f9;
-}
-.nav-tab.active-tab {
-    color: #4338ca;
-    background-color: #eef2ff;
-    border-color: #c7d2fe;
-    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.1);
+/* ==========================================================================
+   ACETERNITY-INSPIRED MOTION & EFFECTS
+   ========================================================================== */
+
+/* 1. Subtle Background Grid */
+.bg-forest-grid {
+    background-color: var(--color-deep-forest);
+    background-image: 
+        radial-gradient(circle at 80% 25%, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+        linear-gradient(to right, rgba(38, 58, 50, 0.4) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(38, 58, 50, 0.4) 1px, transparent 1px);
+    background-size: 100% 100%, 36px 36px, 36px 36px;
 }
 
-/* Tab Transitions */
-.tab-content {
-    animation: fadeIn 0.25s ease-in-out forwards;
+/* 2. Soft Green Spotlight */
+.spotlight-emerald {
+    position: absolute;
+    top: -10%;
+    right: 5%;
+    width: 520px;
+    height: 520px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(18, 59, 42, 0.05) 50%, transparent 72%);
+    pointer-events: none;
+    filter: blur(48px);
+    z-index: 0;
 }
 
-@keyframes fadeIn {
+/* 3. Aceternity Moving Border (exclusively around the Risk Engine card) */
+.moving-border-card {
+    position: relative;
+    border-radius: 14px;
+    padding: 1.5px;
+    overflow: hidden;
+    background: transparent;
+}
+
+.moving-border-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent 0 330deg, #10B981 350deg, #6EE7B7 360deg);
+    animation: rotateBorder 5s linear infinite;
+    z-index: 0;
+}
+
+.moving-border-inner {
+    position: relative;
+    background-color: var(--color-dark-slate);
+    border-radius: 13px;
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+@keyframes rotateBorder {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 4. Animated Beams (Vertical & Horizontal Traveling Beams) */
+.beam-connector {
+    position: relative;
+    width: 2px;
+    height: 22px;
+    background: rgba(38, 58, 50, 0.6);
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.beam-connector::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, #10B981, transparent);
+    animation: beamPulseV 3.2s infinite ease-in-out;
+}
+
+@keyframes beamPulseV {
+    0% {
+        top: -100%;
+    }
+    40%, 100% {
+        top: 100%;
+    }
+}
+
+.animated-beam-h {
+    position: relative;
+    height: 2px;
+    flex: 1;
+    background: rgba(38, 58, 50, 0.6);
+    overflow: hidden;
+}
+
+.animated-beam-h::after {
+    content: '';
+    position: absolute;
+    left: -100%;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, #10B981, transparent);
+    animation: beamPulseH 3.8s infinite ease-in-out;
+}
+
+@keyframes beamPulseH {
+    0% {
+        left: -100%;
+    }
+    40%, 100% {
+        left: 100%;
+    }
+}
+
+/* 5. Hero Node Fade In on Load */
+.hero-node {
+    opacity: 0;
+    animation: heroNodeFade 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes heroNodeFade {
     from {
         opacity: 0;
-        transform: translateY(4px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
@@ -59,47 +222,589 @@
     }
 }
 
-/* OCR Laser Scanner Animation */
-@keyframes scanLine {
-    0% {
-        top: 0%;
+/* Ambient Hero Data Nodes */
+.hero-data-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--color-muted-slate);
+    background: rgba(23, 35, 31, 0.85);
+    border: 1px solid var(--color-border-green);
+    padding: 3px 9px;
+    border-radius: 9999px;
+    backdrop-filter: blur(4px);
+    transition: border-color 200ms ease;
+}
+
+.hero-data-node-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-emerald);
+    box-shadow: 0 0 6px var(--color-emerald);
+}
+
+/* ==========================================================================
+   PRODUCT STORY SIGNAL CARDS (ACETERNITY HOVER EFFECT)
+   ========================================================================== */
+.signal-card {
+    position: relative;
+    background-color: var(--color-dark-slate);
+    border: 1px solid var(--color-border-green);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+}
+
+.signal-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, rgba(110, 231, 183, 0.08) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 240ms ease;
+    pointer-events: none;
+}
+
+.signal-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-emerald);
+    background-color: var(--color-dark-slate-hover);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+}
+
+.signal-card:hover::after {
+    opacity: 1;
+}
+
+.signal-card:hover .signal-icon {
+    transform: translateY(-2px);
+    transition: transform 180ms ease;
+}
+
+/* ==========================================================================
+   MAIN COMPACT NAVIGATION BAR
+   ========================================================================== */
+.nav-tab {
+    position: relative;
+    color: var(--color-muted-slate);
+    background-color: transparent;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.nav-tab:hover {
+    color: var(--color-lime-mint);
+    background-color: rgba(18, 59, 42, 0.6);
+}
+
+.nav-tab:hover i {
+    transform: translateY(-1px);
+    transition: transform 160ms ease;
+}
+
+.nav-tab.active-tab {
+    color: var(--color-deep-forest) !important;
+    background-color: var(--color-emerald) !important;
+    border-color: var(--color-emerald);
+    font-weight: 700;
+    box-shadow: 0 1px 6px rgba(16, 185, 129, 0.3);
+}
+
+.nav-tab.active-tab i {
+    color: var(--color-deep-forest) !important;
+}
+
+/* Tab Content Fade In */
+.tab-content {
+    animation: tabFadeSlide 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tabFadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
     }
-    50% {
-        top: 95%;
-    }
-    100% {
-        top: 0%;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
-.ocr-laser {
+/* ==========================================================================
+   CARD SYSTEM & INSTITUTIONAL CONTAINERS
+   ========================================================================== */
+.inst-card {
+    background-color: var(--color-dark-slate);
+    border: 1px solid var(--color-border-green);
+    border-radius: 14px;
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.inst-card:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* KPI Staggered Entrance */
+.kpi-stagger-1 { animation: kpiEntrance 380ms cubic-bezier(0.16, 1, 0.3, 1) 0ms forwards; }
+.kpi-stagger-2 { animation: kpiEntrance 380ms cubic-bezier(0.16, 1, 0.3, 1) 70ms forwards; }
+.kpi-stagger-3 { animation: kpiEntrance 380ms cubic-bezier(0.16, 1, 0.3, 1) 140ms forwards; }
+.kpi-stagger-4 { animation: kpiEntrance 380ms cubic-bezier(0.16, 1, 0.3, 1) 210ms forwards; }
+
+@keyframes kpiEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Interactive Table Rows */
+.table-interactive-row {
+    transition: background-color 160ms ease;
+}
+
+.table-interactive-row:hover {
+    background-color: var(--color-dark-slate-hover) !important;
+}
+
+.inspect-cluster-btn {
+    transition: color 160ms ease;
+}
+.inspect-cluster-btn:hover i {
+    transform: translateX(2px);
+    transition: transform 160ms ease;
+}
+
+/* ==========================================================================
+   PROGRESS BARS & METERS
+   ========================================================================== */
+.progress-bar-track {
+    background-color: rgba(38, 58, 50, 0.8);
+    border-radius: 9999px;
+    overflow: hidden;
+    height: 5px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.table-action-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.table-action-icon-btn:hover {
+    transform: translateY(-1px);
+}
+
+.table-action-icon-btn:active {
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   SMART INTAKE WORKFLOW & DROPZONES
+   ========================================================================== */
+.intake-step {
+    transition: all 220ms ease;
+}
+.intake-step.active {
+    background-color: var(--color-emerald);
+    color: var(--color-deep-forest);
+    border-color: var(--color-emerald);
+    font-weight: 700;
+}
+.intake-step.completed {
+    background-color: var(--color-forest);
+    color: var(--color-lime-mint);
+    border-color: var(--color-border-green);
+}
+.intake-step-line {
+    height: 2px;
+    background-color: var(--color-border-green);
+    transition: background-color 280ms ease;
+}
+.intake-step-line.active {
+    background-color: var(--color-emerald);
+}
+
+/* Dropzones */
+.smart-dropzone {
+    border: 2px dashed var(--color-border-green);
+    background-color: rgba(18, 59, 42, 0.15);
+    transition: border-color 180ms ease, background-color 180ms ease;
+    cursor: pointer;
+}
+
+.smart-dropzone:hover,
+.smart-dropzone.drag-active {
+    border-color: var(--color-emerald) !important;
+    background-color: rgba(18, 59, 42, 0.35) !important;
+}
+
+.smart-dropzone:hover .dropzone-icon,
+.smart-dropzone.drag-active .dropzone-icon {
+    transform: translateY(-2px);
+    transition: transform 180ms ease;
+}
+
+/* OCR Laser Line (Emerald/Mint, slow smooth movement) */
+.ocr-scanner-frame {
+    position: relative;
+    overflow: hidden;
+}
+
+.ocr-laser-line {
     position: absolute;
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #10b981, #34d399, transparent);
-    box-shadow: 0 0 10px #10b981, 0 0 20px #34d399;
-    animation: scanLine 2s infinite ease-in-out;
+    background: linear-gradient(90deg, transparent, #10B981, #6EE7B7, #10B981, transparent);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    animation: ocrScan 3s infinite ease-in-out;
 }
 
-/* Printable Government Caution Note Formatting */
+@keyframes ocrScan {
+    0% { top: 3%; }
+    50% { top: 95%; }
+    100% { top: 3%; }
+}
+
+/* ==========================================================================
+   SUPPORT PLAN SIMULATOR INTERVENTION CARDS
+   ========================================================================== */
+.intervention-card {
+    background-color: var(--color-dark-slate);
+    border: 1px solid var(--color-border-green);
+    border-radius: 12px;
+    transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+    cursor: pointer;
+}
+
+.intervention-card:hover {
+    background-color: var(--color-dark-slate-hover);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.intervention-card.selected {
+    background-color: rgba(18, 59, 42, 0.4);
+    border-color: var(--color-emerald);
+    transform: scale(1.01);
+}
+
+/* ==========================================================================
+   SATHI PEER MENTORSHIP TOGGLE & PAIR REMOVAL
+   ========================================================================== */
+.mentor-switch {
+    width: 42px;
+    height: 22px;
+    background-color: var(--color-border-green);
+    border-radius: 9999px;
+    padding: 2px;
+    transition: background-color 220ms ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.mentor-switch.active {
+    background-color: var(--color-emerald);
+}
+
+.mentor-switch-knob {
+    width: 18px;
+    height: 18px;
+    background-color: #FFFFFF;
+    border-radius: 9999px;
+    transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: var(--color-deep-forest);
+}
+
+.mentor-switch.active .mentor-switch-knob {
+    transform: translateX(20px);
+}
+
+.pair-card-removing {
+    opacity: 0 !important;
+    transform: scale(0.96) !important;
+    transition: opacity 220ms ease, transform 220ms ease !important;
+}
+
+/* Multi-Vector Diagnostic Animations */
+.dna-profile-card {
+    animation: dnaCardFadeIn 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dnaCardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.vector-bar-fill {
+    transition: width 650ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   EMERGENCY SOS & SEVERE PULSE (Slow & Subtle)
+   ========================================================================== */
+.severe-pulse-indicator {
+    animation: slowSubtlePulse 2.8s infinite ease-in-out;
+}
+
+@keyframes slowSubtlePulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(0.97);
+    }
+}
+
+/* ==========================================================================
+   MODALS & TOAST NOTIFICATIONS
+   ========================================================================== */
+.modal-backdrop-animate {
+    animation: modalBackdropFade 220ms ease forwards;
+}
+
+@keyframes modalBackdropFade {
+    from { opacity: 0; }
+    to { opacity: 0.65; }
+}
+
+.modal-content-animate {
+    animation: modalPop 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#toast {
+    transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1), opacity 250ms ease;
+}
+
+#toast.toast-visible {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+#toast.toast-hidden {
+    transform: translateY(20px) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ==========================================================================
+   BUTTONS & FOCUS RINGS
+   ========================================================================== */
+.btn-emerald {
+    background-color: var(--color-emerald);
+    color: var(--color-deep-forest);
+    font-weight: 700;
+    border-radius: 9px;
+    border: 1px solid var(--color-emerald);
+    transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.btn-emerald:hover {
+    background-color: var(--color-lime-mint);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
+}
+
+.btn-emerald:active {
+    transform: translateY(0);
+}
+
+.btn-outline-mint {
+    background-color: transparent;
+    color: var(--color-lime-mint);
+    border: 1px solid var(--color-border-green);
+    font-weight: 600;
+    border-radius: 9px;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.btn-outline-mint:hover {
+    background-color: rgba(18, 59, 42, 0.4);
+    border-color: var(--color-emerald);
+    transform: translateY(-1px);
+}
+
+.btn-dark-green {
+    background-color: var(--color-forest);
+    color: var(--color-warm-white);
+    border: 1px solid var(--color-border-green);
+    border-radius: 9px;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.btn-dark-green:hover {
+    background-color: var(--color-forest-light);
+    border-color: var(--color-emerald);
+    transform: translateY(-1px);
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background-color: var(--color-dark-slate);
+    color: var(--color-warm-white);
+    border: 1px solid var(--color-border-green);
+    border-radius: 9px;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-dark-slate-hover);
+    border-color: var(--color-emerald);
+    transform: translateY(-1px);
+}
+
+/* Primary Dark / Charcoal class compatibility */
+.btn-primary-charcoal {
+    background-color: var(--color-emerald);
+    color: var(--color-deep-forest);
+    font-weight: 700;
+    border-radius: 9px;
+    border: 1px solid var(--color-emerald);
+    transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.btn-primary-charcoal:hover {
+    background-color: var(--color-lime-mint);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
+}
+
+.btn-beige {
+    background-color: var(--color-emerald);
+    color: var(--color-deep-forest);
+    border: 1px solid var(--color-emerald);
+    font-weight: 700;
+    border-radius: 9px;
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.btn-beige:hover {
+    background-color: var(--color-lime-mint);
+    transform: translateY(-1px);
+}
+
+.btn-outline-beige {
+    background-color: transparent;
+    color: var(--color-lime-mint);
+    border: 1px solid var(--color-border-green);
+    font-weight: 600;
+    border-radius: 9px;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.btn-outline-beige:hover {
+    background-color: rgba(18, 59, 42, 0.4);
+    border-color: var(--color-emerald);
+    transform: translateY(-1px);
+}
+
+/* Input / Interactive Focus Rings */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-emerald) !important;
+}
+
+/* Shake animation for login error */
+.shake-error {
+    animation: shakeError 400ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shakeError {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+    40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+/* ==========================================================================
+   PRINT STYLES
+   ========================================================================== */
 @media print {
     body * {
-        visibility: hidden;
+        visibility: hidden !important;
     }
-    #cautionNotePaper, #cautionNotePaper * {
-        visibility: visible;
+    #cautionNotePaper, #cautionNotePaper *,
+    #printableCertificateArea, #printableCertificateArea * {
+        visibility: visible !important;
     }
-    #cautionNotePaper {
+    #cautionNotePaper, #printableCertificateArea {
         position: absolute;
         left: 0;
         top: 0;
         width: 100%;
         margin: 0;
-        padding: 20px;
-        box-shadow: none;
-        border: none;
+        padding: 24px;
+        box-shadow: none !important;
+        border: none !important;
         background: #ffffff !important;
         color: #000000 !important;
+    }
+}
+
+/* ==========================================================================
+   REDUCED MOTION ACCESSIBILITY
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+    .beam-connector::after,
+    .animated-beam-h::after,
+    .ocr-laser-line,
+    .severe-pulse-indicator,
+    .moving-border-card::before {
+        animation: none !important;
     }
 }
